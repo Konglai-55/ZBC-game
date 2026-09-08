@@ -324,23 +324,43 @@ export function getUploadKind(filename: string): UploadRecord["kind"] | undefine
 }
 
 export async function listUploads(): Promise<UploadRecord[]> {
-  await fs.mkdir(uploadDirectory, { recursive: true });
-  const entries = await fs.readdir(uploadDirectory, { withFileTypes: true });
-  const localRecords = await Promise.all(entries.filter((entry) => entry.isFile() && !entry.name.startsWith(".")).map(async (entry) => {
-    const info = await fs.stat(path.join(uploadDirectory, entry.name));
-    return {
-      name: entry.name,
-      url: `/uploads/${encodeURIComponent(entry.name)}`,
-      size: info.size,
-      updatedAt: info.mtime.toISOString(),
-      kind: getUploadKind(entry.name) ?? "document",
-    } satisfies UploadRecord;
-  }));
-  const remoteRecords = (await listObjects("uploads/")).map((item) => {
+  const [localResult, remoteResult] = await Promise.allSettled([
+    (async () => {
+      await fs.mkdir(uploadDirectory, { recursive: true });
+      const entries = await fs.readdir(uploadDirectory, { withFileTypes: true });
+      return Promise.all(entries.filter((entry) => entry.isFile() && !entry.name.startsWith(".")).map(async (entry) => {
+        const info = await fs.stat(path.join(uploadDirectory, entry.name));
+        return {
+          name: entry.name,
+          url: `/uploads/${encodeURIComponent(entry.name)}`,
+          size: info.size,
+          updatedAt: info.mtime.toISOString(),
+          kind: getUploadKind(entry.name) ?? "document",
+        } satisfies UploadRecord;
+      }));
+    })(),
+    listObjects("uploads/"),
+  ]);
+
+  if (localResult.status === "rejected") {
+    console.error("[content-store:listUploads] 本地上传目录暂时不可用", errorCode(localResult.reason));
+  }
+  if (remoteResult.status === "rejected") {
+    console.error("[content-store:listUploads] 对象存储暂时不可用", errorCode(remoteResult.reason));
+  }
+
+  const localRecords = localResult.status === "fulfilled" ? localResult.value : [];
+  const remoteRecords = remoteResult.status === "fulfilled" ? remoteResult.value.map((item) => {
     const name = item.key.slice("uploads/".length);
     return { name, url: objectPublicUrl(item.key), size: item.size, updatedAt: item.updatedAt, kind: "image" as const };
-  });
+  }) : [];
   return [...remoteRecords, ...localRecords].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+function errorCode(error: unknown) {
+  if (!error || typeof error !== "object") return "UNKNOWN";
+  const candidate = error as { code?: unknown; name?: unknown };
+  return String(candidate.code || candidate.name || "UNKNOWN");
 }
 
 export async function saveUpload(file: File): Promise<UploadRecord> {
