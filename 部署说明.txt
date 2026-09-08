@@ -1,0 +1,28 @@
+ZBC·Game 生产部署包
+===================
+
+环境要求
+- Node.js 20.9.0 或更高版本
+- 已包含生产依赖和编译结果，无需执行 pnpm install 或重新构建
+
+首次部署
+1. 将 .env.example 复制为 .env.local。
+2. 修改 ADMIN_USERNAME、ADMIN_PASSWORD、ADMIN_SESSION_SECRET。
+   ADMIN_SESSION_SECRET 建议使用至少 32 位随机字符串。
+3. 确保当前目录以及 data、public/uploads 目录可写。
+4. Windows 双击 start-windows.cmd；Linux/macOS 执行：sh start-linux.sh
+5. 默认监听 0.0.0.0:3000，可通过 PORT 和 HOSTNAME 环境变量覆盖。
+
+反向代理
+- 建议使用 Nginx/Caddy 将 HTTPS 域名反代至 127.0.0.1:3000。
+- 必须转发 Host、X-Forwarded-Host、X-Forwarded-Proto 和客户端真实 IP。
+- 请勿直接将 3000 端口暴露到公网。
+
+数据备份
+- data 目录保存后台内容和统计数据，应定期备份。
+- public/uploads 保存非图片附件，应定期备份。
+- 图片位于已配置的对象存储中，不在本压缩包内。
+
+更新部署
+- 更新前先备份旧站的 data、public/uploads 和 .env.local。
+- 解压新版后，将以上目录/文件恢复到新版本中，再启动服务。

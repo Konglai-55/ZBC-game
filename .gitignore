@@ -1,0 +1,7 @@
+/dist/
+.vinext/
+.wrangler/
+/.next/
+/node_modules/
+.env.local
+.env.*.local

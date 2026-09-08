@@ -1,0 +1,57 @@
+[
+  {
+    "id": "controller-bridge",
+    "group": "tools",
+    "category": "工具软件",
+    "name": "手柄映射工具 Controller Bridge",
+    "description": "为常见手柄提供按键映射、配置导入和快速切换。",
+    "version": "2.4.1",
+    "size": "184 MB",
+    "updated": "2026-08-27",
+    "published": true
+  },
+  {
+    "id": "runtime-repair",
+    "group": "tools",
+    "category": "系统软件",
+    "name": "游戏运行库检测与修复合集",
+    "description": "检测并补齐 DirectX、VC 运行库等常见游戏依赖。",
+    "version": "2026.08",
+    "size": "1.9 GB",
+    "updated": "2026-08-25",
+    "published": true
+  },
+  {
+    "id": "savedock",
+    "group": "tools",
+    "category": "修改软件",
+    "name": "通用存档备份管理器 SaveDock",
+    "description": "按游戏建立存档备份、恢复点与迁移记录。",
+    "version": "1.8.0",
+    "size": "76 MB",
+    "updated": "2026-08-23",
+    "published": true
+  },
+  {
+    "id": "frame-monitor",
+    "group": "tools",
+    "category": "工具软件",
+    "name": "帧率与硬件性能监测工具",
+    "description": "显示帧率、温度、占用率和帧时间统计。",
+    "version": "4.2",
+    "size": "244 MB",
+    "updated": "2026-08-21",
+    "published": true
+  },
+  {
+    "id": "starter-mod-pack",
+    "group": "mod",
+    "category": "MOD整合",
+    "name": "新手 MOD 整合示例包",
+    "description": "用于演示 MOD 资源发布、附件和外链管理流程。",
+    "version": "1.0",
+    "size": "620 MB",
+    "updated": "2026-08-20",
+    "published": true
+  }
+]
