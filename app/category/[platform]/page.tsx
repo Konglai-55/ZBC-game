@@ -6,7 +6,7 @@ import { Icon } from "@/components/icon";
 import { PageHero } from "@/components/page-hero";
 import { SortToggle } from "@/components/sort-toggle";
 import { getPlatform, platformMeta } from "@/lib/data";
-import { listGames } from "@/lib/content-store";
+import { getSiteSettings, listGames } from "@/lib/content-store";
 import type { Platform } from "@/lib/types";
 
 type PageProps = { params: Promise<{ platform: string }>; searchParams: Promise<{ filter?: string; sort?: string }> };
@@ -18,13 +18,22 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { platform } = await params;
   const meta = getPlatform(platform);
-  return { title: meta?.label ?? "游戏分类", description: meta?.description };
+  if (!meta) return { title: "游戏分类" };
+  const settings = await getSiteSettings();
+  const description = platform in settings.categoryIntroductions
+    ? settings.categoryIntroductions[platform as keyof typeof settings.categoryIntroductions]
+    : meta.description;
+  return { title: meta.label, description };
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { platform } = await params;
   const meta = getPlatform(platform);
   if (!meta) notFound();
+  const settings = await getSiteSettings();
+  const categoryIntroduction = platform in settings.categoryIntroductions
+    ? settings.categoryIntroductions[platform as keyof typeof settings.categoryIntroductions]
+    : `${meta.shortLabel} ${meta.description}`;
   const defaultFilter = platform === "pc" ? "最新游戏" : platform === "switch" ? "switch游戏" : platform === "ps5" ? "PS5游戏" : "全部";
   const { filter: requestedFilter = defaultFilter, sort: requestedSort } = await searchParams;
   const filter = meta.filters.length === 0 ? "全部" : platform === "pc" && requestedFilter === "最近更新" ? "最新游戏" : requestedFilter;
@@ -40,7 +49,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <>
-      <PageHero eyebrow={`${meta.shortLabel} ${meta.description}`} title={meta.label} description="" icon={platform === "mobile" ? "smartphone" : platform === "pc" ? "monitor" : "gamepad"} />
+      <PageHero eyebrow={categoryIntroduction} title={meta.label} description="" icon={platform === "mobile" ? "smartphone" : platform === "pc" ? "monitor" : "gamepad"} />
       <div className="shell section category-layout">
         <div>
           {meta.filters.length > 0 && <div className="filter-row" aria-label={`${meta.label}分类筛选`}>

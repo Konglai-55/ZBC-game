@@ -161,11 +161,19 @@ export function parseFeedbackPatch(value: unknown): Pick<FeedbackRecord, "status
 
 export function parseSettings(value: unknown): SiteSettings {
   const body = object(value);
+  const categoryIntroductions = object(body.categoryIntroductions);
   return {
     siteName: text(body.siteName, "站点名称", { required: true, max: 40 }),
     announcement: text(body.announcement, "首页公告", { required: true, max: 120 }),
     contactEmail: email(body.contactEmail, "联系邮箱"),
     rightsEmail: email(body.rightsEmail, "侵权投诉邮箱"),
+    categoryIntroductions: {
+      pc: text(categoryIntroductions.pc, "电脑游戏文案", { required: true, max: 120 }),
+      switch: text(categoryIntroductions.switch, "Switch 游戏文案", { required: true, max: 120 }),
+      mobile: text(categoryIntroductions.mobile, "手机游戏文案", { required: true, max: 120 }),
+      ps5: text(categoryIntroductions.ps5, "PS5 游戏文案", { required: true, max: 120 }),
+      ps4: text(categoryIntroductions.ps4, "PS4 游戏文案", { required: true, max: 120 }),
+    },
   };
 }
 

@@ -368,6 +368,13 @@ export const defaultSiteSettings: SiteSettings = {
   announcement: "游戏/软件每日持续更新中",
   contactEmail: "XXXX@XXX.com",
   rightsEmail: "XXX@XXX.com",
+  categoryIntroductions: {
+    pc: "海量 PC 单机大作 & 独立佳作，下载即玩",
+    switch: "Switch 游戏｜热门掌机作品与本地多人游戏合集",
+    mobile: "海量手机游戏，收录安卓平台优质移动端游戏佳作",
+    ps5: "海量 PS5 次世代主机游戏，收录各类精品游戏大作",
+    ps4: "海量 PS4 主机游戏，经典主机佳作，收录各类游戏合集",
+  },
 };
 
 export function getGame(slug: string) {

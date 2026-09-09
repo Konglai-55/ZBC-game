@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import "@/app/site.css";
 import { SiteFrame } from "@/components/site-frame";
 import { getSiteSettings, listLegalDocuments } from "@/lib/content-store";
-import { mediaUrl } from "@/lib/media-url";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
     template: "%s | ZBC Game",
   },
   description: "中文游戏资源门户，收录电脑、Switch、手机、PS5、PS4 游戏与实用工具。",
-  icons: { icon: mediaUrl("/brand/icon.svg") },
 };
 
 export const viewport: Viewport = {

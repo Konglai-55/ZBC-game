@@ -16,7 +16,20 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
     setSaving(true);
     setNotice("");
     setError("");
-    const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      siteName: formData.get("siteName"),
+      announcement: formData.get("announcement"),
+      contactEmail: formData.get("contactEmail"),
+      rightsEmail: formData.get("rightsEmail"),
+      categoryIntroductions: {
+        pc: formData.get("categoryIntroPc"),
+        switch: formData.get("categoryIntroSwitch"),
+        mobile: formData.get("categoryIntroMobile"),
+        ps5: formData.get("categoryIntroPs5"),
+        ps4: formData.get("categoryIntroPs4"),
+      },
+    };
     const response = await fetch("/api/admin/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -24,7 +37,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
     });
     const result = await response.json() as { error?: string };
     if (response.ok) {
-      setNotice("站点设置已保存，品牌、页脚和文书邮箱已同步更新。");
+      setNotice("站点设置已保存，分类页蓝色文案也已同步更新。");
       router.refresh();
     } else {
       setError(result.error || "保存失败");
@@ -39,6 +52,17 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
         <div className="admin-form-grid">
           <label>站点名称<input name="siteName" defaultValue={initialSettings.siteName} required maxLength={40} /></label>
           <label className="admin-form-grid__full">首页公告<input name="announcement" defaultValue={initialSettings.announcement} required maxLength={120} /><small className="admin-field-help">用于前台公告信息，保持一句话即可。</small></label>
+        </div>
+      </section>
+      <section className="admin-panel-card">
+        <div className="admin-panel-card__head"><div><span>CATEGORY PAGE COPY</span><h2>教程 / 问题文案</h2></div><Icon name="book" size={19} /></div>
+        <p className="admin-settings-intro">编辑各游戏分类页标题上方的蓝色说明文字，保存后前台对应页面立即更新。</p>
+        <div className="admin-form-grid admin-copy-grid">
+          <label>电脑游戏<textarea name="categoryIntroPc" rows={2} defaultValue={initialSettings.categoryIntroductions.pc} required maxLength={120} /></label>
+          <label>Switch 游戏<textarea name="categoryIntroSwitch" rows={2} defaultValue={initialSettings.categoryIntroductions.switch} required maxLength={120} /></label>
+          <label>手机游戏<textarea name="categoryIntroMobile" rows={2} defaultValue={initialSettings.categoryIntroductions.mobile} required maxLength={120} /></label>
+          <label>PS5 游戏<textarea name="categoryIntroPs5" rows={2} defaultValue={initialSettings.categoryIntroductions.ps5} required maxLength={120} /></label>
+          <label className="admin-form-grid__full">PS4 游戏<textarea name="categoryIntroPs4" rows={2} defaultValue={initialSettings.categoryIntroductions.ps4} required maxLength={120} /></label>
         </div>
       </section>
       <section className="admin-panel-card">

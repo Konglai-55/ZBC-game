@@ -986,6 +986,8 @@ h1, h2, h3, p { margin-top: 0; }
 .admin-settings-form label { display: grid; gap: 7px; color: #686b74; font-size: 11px; font-weight: 700; }
 .admin-settings-form input, .admin-settings-form textarea { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #dfe1e7; border-radius: 5px; outline: 0; color: #303238; background: #fff; font: inherit; font-size: 12px; resize: vertical; }
 .admin-settings-form input:focus, .admin-settings-form textarea:focus { border-color: #7a61ea; box-shadow: 0 0 0 3px #efedff; }
+.admin-settings-intro { margin: -7px 0 18px; color: #7d818b; font-size: 12px; line-height: 1.7; }
+.admin-copy-grid textarea { min-height: 66px; line-height: 1.6; }
 .admin-settings-actions { display: flex; justify-content: flex-end; }
 .admin-document-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 18px; }
 .admin-document-card { min-width: 0; padding: 20px; background: #fff; border: 1px solid #e3e4e9; border-radius: 8px; transition: border-color .18s ease, box-shadow .18s ease; }

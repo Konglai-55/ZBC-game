@@ -84,6 +84,7 @@ export type SiteSettings = {
   announcement: string;
   contactEmail: string;
   rightsEmail: string;
+  categoryIntroductions: Record<"pc" | "switch" | "mobile" | "ps5" | "ps4", string>;
 };
 
 export type LegalDocumentId = "about" | "infringement" | "copyright";

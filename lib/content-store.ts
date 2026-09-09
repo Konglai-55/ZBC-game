@@ -253,7 +253,14 @@ export async function deleteFeedback(id: string): Promise<boolean> {
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   const stored = await readJson<Partial<SiteSettings>>("settings.json", defaultSiteSettings);
-  return { ...defaultSiteSettings, ...stored };
+  return {
+    ...defaultSiteSettings,
+    ...stored,
+    categoryIntroductions: {
+      ...defaultSiteSettings.categoryIntroductions,
+      ...(stored.categoryIntroductions ?? {}),
+    },
+  };
 }
 
 export async function saveSiteSettings(settings: SiteSettings): Promise<SiteSettings> {
