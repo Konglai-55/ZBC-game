@@ -312,6 +312,14 @@ h1, h2, h3, p { margin-top: 0; }
 .category-search--prominent input { height: 42px; font-size: 16px; }
 .category-search--prominent button { min-height: 42px; padding-inline: 20px; font-size: 14px; }
 .game-grid--category { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.game-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 26px; }
+.game-pagination__pages { display: flex; align-items: center; gap: 6px; }
+.game-pagination a, .game-pagination__arrow { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 9px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 700; transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
+.game-pagination a:hover { color: var(--purple); border-color: #cfc5ff; background: var(--purple-soft); transform: translateY(-1px); }
+.game-pagination a.is-active { color: #fff; background: var(--purple); border-color: var(--purple); }
+.game-pagination__arrow { padding: 0; }
+.game-pagination__arrow.is-disabled { color: #c6cad3; background: #f8f9fb; cursor: not-allowed; }
+.game-pagination__previous { transform: rotate(180deg); }
 .ranking-panel--sticky { position: sticky; top: 82px; height: 100%; min-height: 680px; }
 .empty-state { display: grid; place-items: center; min-height: 300px; padding: 40px; text-align: center; background: #fff; border: 1px dashed var(--border-strong); border-radius: 8px; }
 .empty-state svg { color: var(--purple); }
