@@ -433,15 +433,11 @@ h1, h2, h3, p { margin-top: 0; }
 .download-modal h2 { margin: 5px 0; font-size: 22px; }
 .download-modal__lead { margin: 7px auto 0; color: var(--text-muted); font-size: 14px; line-height: 1.65; }
 .download-modal__scan-tip { margin: 17px auto 0; color: var(--text-soft); font-size: 13px; }
-.download-modal__scan-layout { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 8px; margin: 8px auto 12px; }
-.download-modal__scan-layout--single { display: block; margin-top: 8px; }
-.download-qr { position: relative; width: 236px; height: 236px; display: grid; place-items: center; margin: 18px auto 14px; padding: 8px; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(23,24,28,.08); }
-.download-qr img { display: block; width: 220px; height: 220px; max-width: 100%; object-fit: contain; }
+.download-modal__scan-layout { margin: 8px auto 12px; }
+.download-qr { position: relative; width: min(300px, 100%); aspect-ratio: 1; display: grid; place-items: center; margin: 12px auto 14px; padding: 8px; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(23,24,28,.08); }
+.download-qr img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .download-qr__status { position: absolute; inset: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 18px; color: var(--text-muted); background: var(--surface-soft); border-radius: 5px; font-size: 13px; font-weight: 700; }
 .download-qr__status.is-error { color: #a3481e; background: #fff4ed; }
-.download-modal--quark .download-qr { width: 164px; height: 164px; margin: 8px auto; }
-.download-modal--quark .download-qr img { width: 148px; height: 148px; }
-.download-modal__guide-image { width: 150px; height: 214px; justify-self: center; object-fit: contain; border-radius: 5px; }
 .download-modal__note { margin: 6px auto 12px; padding: 10px 12px; color: var(--text-muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 5px; font-size: 12px; line-height: 1.6; text-align: left; }
 .copy-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px 12px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
 .copy-box button { min-height: 44px; padding-inline: 8px; display: inline-flex; align-items: center; gap: 4px; color: var(--purple); background: transparent; border: 0; border-radius: 4px; cursor: pointer; }
@@ -837,10 +833,6 @@ h1, h2, h3, p { margin-top: 0; }
 
 @media (max-width: 560px) {
   .download-modal { padding: 24px 16px; }
-  .download-modal--quark .download-qr { width: 140px; height: 140px; }
-  .download-modal--quark .download-qr img { width: 124px; height: 124px; }
-  .download-modal__guide-image { width: 120px; height: 180px; }
-  .download-modal__scan-layout { gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

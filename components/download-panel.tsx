@@ -78,17 +78,16 @@ export function DownloadPanel({ game }: { game: Game }) {
       </div>
       {selected && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeDownload()}>
-          <section className={`download-modal download-modal--${selected.id}`} role="dialog" aria-modal="true" aria-labelledby="download-modal-title">
+          <section className="download-modal" role="dialog" aria-modal="true" aria-labelledby="download-modal-title">
             <button className="modal-close" ref={closeButtonRef} type="button" aria-label="关闭弹窗" onClick={closeDownload}><Icon name="x" /></button>
             <h2 id="download-modal-title">手机扫码保存资源</h2>
             <p className="download-modal__lead">请使用{selected.name} App 扫码保存资源，再到电脑上下载即可！！</p>
             {selected.id === "quark" && <p className="download-modal__scan-tip">打开夸克 App - 点击搜索框右侧 - 扫码</p>}
             {selected.id === "baidu" && <p className="download-modal__scan-tip">打开百度网盘 App - 点击搜索框右侧 - 扫码</p>}
-            <div className={selected.id === "quark" ? "download-modal__scan-layout" : "download-modal__scan-layout download-modal__scan-layout--single"}>
+            <div className="download-modal__scan-layout">
               <div className="download-qr" role="img" aria-label={`${selected.name}网盘二维码`}>
                 {selected.qrCode ? <img src={mediaUrl(selected.qrCode)} alt={`${selected.name}网盘二维码`} /> : <span className="download-qr__status is-error"><Icon name="warning" size={20} />管理员尚未上传此网盘二维码</span>}
               </div>
-              {selected.id === "quark" && <img className="download-modal__guide-image" src={mediaUrl("/brand/quark-scan-guide.jpg")} alt="夸克 App 扫码位置示意" />}
             </div>
             {selected.code && (
               <div className="copy-box"><span>提取码 <strong>{selected.code}</strong></span><button type="button" onClick={copyCode}><Icon name={copied ? "check" : "copy"} size={16} />{copied ? "已复制" : "复制"}</button></div>

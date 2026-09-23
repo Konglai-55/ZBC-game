@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 export function GameCard({ game }: { game: Game }) {
   const platform = getPlatform(game.platform);
   return (
-    <Link className="game-card" href={`/games/${game.slug}`}>
+    <Link className="game-card" href={`/games/${game.slug}`} target="_blank" rel="noopener noreferrer">
       <div className="game-card__media">
         <GameArtwork game={game} />
         <div className="game-card__topline">
@@ -30,7 +30,7 @@ export function GameCard({ game }: { game: Game }) {
 
 export function RankedGame({ game, rank, mode = "ranking" }: { game: Game; rank: number; mode?: "ranking" | "updated" }) {
   return (
-    <Link className="ranked-game" href={`/games/${game.slug}`}>
+    <Link className="ranked-game" href={`/games/${game.slug}`} target="_blank" rel="noopener noreferrer">
       <div className="ranked-game__art">
         <GameArtwork game={game} variant="compact" />
         <span>{mode === "updated" ? `更新 ${rank}` : `TOP ${rank}`}</span>

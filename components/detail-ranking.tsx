@@ -30,7 +30,7 @@ export function DetailRanking({ games }: { games: Game[] }) {
       </div>
       <div className="detail-ranking__list">
         {ranked.map((item, index) => (
-          <Link href={`/games/${item.slug}`} key={item.slug}>
+          <Link href={`/games/${item.slug}`} key={item.slug} target="_blank" rel="noopener noreferrer">
             <span className={`detail-ranking__rank rank-${index + 1}`}>{String(index + 1).padStart(2, "0")}</span>
             <GameArtwork game={item} variant="compact" />
             <span className="detail-ranking__copy"><strong>{item.title}<em>{item.badge}</em></strong><small><Icon name="star" size={12} />{item.score} · {item.size} · {getPlatform(item.platform)?.shortLabel} · {item.genre}</small></span>
