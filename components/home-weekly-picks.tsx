@@ -11,7 +11,7 @@ type SortMode = "latest" | "hot";
 export function HomeWeeklyPicks({ games, initialSort }: { games: Game[]; initialSort: SortMode }) {
   const [sort, setSort] = useState<SortMode>(initialSort);
   const weeklyGames = useMemo(() => games.filter((game) => game.platform === "pc").sort((a, b) => sort === "hot" ? b.views - a.views || b.score - a.score : b.updated.localeCompare(a.updated)).slice(0, 16), [games, sort]);
-  const rankedGames = useMemo(() => [...games].sort((a, b) => b.views - a.views || b.score - a.score).slice(0, 9), [games]);
+  const rankedGames = useMemo(() => [...games].sort((a, b) => b.views - a.views || b.score - a.score).slice(0, 12), [games]);
 
   function selectSort(nextSort: SortMode) {
     setSort(nextSort);

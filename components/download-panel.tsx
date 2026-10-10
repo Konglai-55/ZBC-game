@@ -10,10 +10,15 @@ function ProviderIcon({ id }: { id: DownloadSource["id"] }) {
   return <span className={`provider-icon provider-icon--${id}`}><img src={mediaUrl(`/brand/${logo}`)} alt="" aria-hidden="true" /></span>;
 }
 
-export function DownloadPanel({ game }: { game: Game }) {
+type DownloadPanelProps = { game: Game } | { title: string; updated: string; size: string; downloads: DownloadSource[] };
+
+export function DownloadPanel(props: DownloadPanelProps) {
+  const details = "game" in props
+    ? { title: `${props.game.title} 免安装中文版`, updated: props.game.updated, size: props.game.size, downloads: props.game.downloads }
+    : props;
   // A line is available only after its QR code has been configured. Legacy URL-only
   // records stay in the data for editing, but are intentionally hidden from visitors.
-  const availableDownloads = game.downloads.filter((source) => Boolean(source.qrCode));
+  const availableDownloads = details.downloads.filter((source) => Boolean(source.qrCode));
   const [selected, setSelected] = useState<DownloadSource | null>(null);
   const [copied, setCopied] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -59,7 +64,7 @@ export function DownloadPanel({ game }: { game: Game }) {
       <div className="download-panel">
         <div className="download-panel__head">
           <span className="download-panel__mark"><Icon name="cpu" size={21} /></span>
-          <div><h3>{game.title} 免安装中文版</h3><p>更新时间：<strong>{game.updated}</strong> · 文件大小 {game.size}</p></div>
+          <div><h3>{details.title}</h3><p>更新时间：<strong>{details.updated}</strong> · 文件大小 {details.size}</p></div>
         </div>
         <div className="download-panel__alerts">
           <p><Icon name="cloud" size={17} />请使用手机网盘App客户端扫码，并将资源转存至个人网盘后再下载，避免下载限速。</p>

@@ -88,7 +88,7 @@ export const platformMeta: PlatformMeta[] = [
   {
     key: "mobile",
     label: "手机游戏",
-    shortLabel: "Mobile",
+    shortLabel: "手机端",
     description: "精选 Android 与移动端精品，快速查看版本信息。",
     filters: [],
   },

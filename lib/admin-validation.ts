@@ -3,6 +3,7 @@ import { isManagedMediaUrl } from "@/lib/media-url";
 
 const platforms: Platform[] = ["pc", "switch", "mobile", "ps5", "ps4", "other"];
 const badges: Game["badge"][] = ["新游", "更新", "热门", "精选"];
+const downloadIds: DownloadSource["id"][] = ["quark", "baidu", "xunlei", "mobile"];
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("请求内容格式无效");
@@ -82,17 +83,20 @@ function download(value: unknown, id: DownloadSource["id"]): DownloadSource {
   };
 }
 
+function downloads(value: unknown) {
+  const items = Array.isArray(value) ? value : [];
+  return downloadIds.map((id) => {
+    const matched = items.find((item) => object(item).id === id);
+    return matched ? download(matched, id) : undefined;
+  }).filter((source): source is DownloadSource => Boolean(source));
+}
+
 export function parseGame(value: unknown): Game {
   const body = object(value);
   const platform = text(body.platform, "游戏平台") as Platform;
   if (!platforms.includes(platform)) throw new Error("游戏平台无效");
   const badge = text(body.badge, "状态标签") as Game["badge"];
   if (!badges.includes(badge)) throw new Error("状态标签无效");
-  const rawDownloads = Array.isArray(body.downloads) ? body.downloads : [];
-  const downloads = (["quark", "baidu", "xunlei", "mobile"] as const).map((id) => {
-    const matched = rawDownloads.find((item) => object(item).id === id);
-    return matched ? download(matched, id) : undefined;
-  }).filter((source): source is DownloadSource => Boolean(source));
   const minimum = lines(object(body.requirements ?? {}).minimum, "最低配置");
   const recommended = lines(object(body.requirements ?? {}).recommended, "推荐配置");
   return {
@@ -112,7 +116,7 @@ export function parseGame(value: unknown): Game {
     cover: assetUrl(body.cover, "封面地址") || undefined,
     description: lines(body.description, "游戏介绍"),
     requirements: platform === "pc" && (minimum.length || recommended.length) ? { minimum, recommended } : undefined,
-    downloads,
+    downloads: downloads(body.downloads),
   };
 }
 
@@ -126,12 +130,15 @@ export function parseResource(value: unknown): ResourceItem {
     category: text(body.category, "资源分类", { required: true, max: 40 }),
     name: text(body.name, "资源名称", { required: true, max: 140 }),
     description: text(body.description, "资源说明", { required: true, max: 2000 }),
+    content: lines(body.content, "详情正文"),
     iconUrl: url(body.iconUrl, "工具图标地址") || undefined,
+    imageUrl: assetUrl(body.imageUrl, "详情图片") || undefined,
     version: text(body.version, "版本", { required: true, max: 50 }),
     size: text(body.size, "文件大小", { required: true, max: 30 }),
     updated: date(body.updated, "更新时间"),
     fileUrl: url(body.fileUrl, "附件地址") || undefined,
     externalUrl: url(body.externalUrl, "外部地址") || undefined,
+    downloads: downloads(body.downloads),
     published: boolean(body.published),
   };
 }

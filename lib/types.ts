@@ -48,12 +48,15 @@ export type ResourceItem = {
   category: string;
   name: string;
   description: string;
+  content?: string[];
   iconUrl?: string;
+  imageUrl?: string;
   version: string;
   size: string;
   updated: string;
   fileUrl?: string;
   externalUrl?: string;
+  downloads?: DownloadSource[];
   published: boolean;
 };
 

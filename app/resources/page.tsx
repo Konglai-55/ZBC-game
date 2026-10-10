@@ -11,7 +11,6 @@ export const metadata: Metadata = { title: "MOD 与工具资源", description: "
 const resourceGroups = {
   mod: [
     { title: "MOD整合" },
-    { title: "dlc" },
     { title: "修改器/存档" },
   ],
   tools: [
@@ -24,7 +23,6 @@ const resourceGroups = {
 
 const resourceCategoryAliases: Record<string, string[]> = {
   "MOD整合": ["MOD整合", "MOD 整合"],
-  dlc: ["dlc", "DLC", "DLC 资源"],
   "修改器/存档": ["修改器/存档", "修改器 / 存档"],
 };
 
@@ -43,7 +41,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   const canonicalRequestedCategory = requestedCategory ? canonicalResourceCategory(requestedCategory) : undefined;
   const defaultCategory = active === "mod" ? "MOD整合" : "最新更新";
   const activeCategory = canonicalRequestedCategory && resourceGroups[active].some((group) => group.title === canonicalRequestedCategory) ? canonicalRequestedCategory : defaultCategory;
-  const hotCategoryOrder = ["修改软件", "工具软件", "系统软件", "MOD整合", "dlc", "修改器/存档"];
+  const hotCategoryOrder = ["修改软件", "工具软件", "系统软件", "MOD整合", "修改器/存档"];
   const query = q.trim().toLowerCase();
   const allManagedResources = (await listResources()).filter((item) => item.group === active && item.published);
   const managedResources = allManagedResources.filter((item) => {
