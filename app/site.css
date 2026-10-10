@@ -212,6 +212,7 @@ h1, h2, h3, p { margin-top: 0; }
 .game-art img { object-fit: cover; }
 .game-card__topline { position: absolute; inset: 8px 8px auto; z-index: 2; display: flex; justify-content: space-between; gap: 7px; }
 .tag { display: inline-flex; align-items: center; padding: 5px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.game-card__topline .tag { padding: 3px 6px; font-size: 11px; line-height: 1.4; white-space: nowrap; }
 .tag--glass { color: #fff; background: rgba(28,27,33,.72); }
 .tag--hot { color: #fff; background: #ef4d6d; }
 .tag--cool { color: #fff; background: var(--blue); }
@@ -785,6 +786,8 @@ h1, h2, h3, p { margin-top: 0; }
   .game-grid, .home-content-grid .game-grid, .game-grid--category, .game-grid--search { gap: 9px; }
   .game-grid--search, .game-grid--search.game-grid--sparse { grid-template-columns: 1fr; max-width: none; gap: 14px; }
   .game-card__body { padding: 11px; }
+  .game-card__topline { inset: 6px 6px auto; gap: 4px; }
+  .game-card__topline .tag { padding: 2px 5px; font-size: 10px; border-radius: 3px; }
   .game-card__platform { font-size: 12px; }
   .game-card h3 { font-size: 15px; }
   .game-card p { display: block; font-size: 11px; }
