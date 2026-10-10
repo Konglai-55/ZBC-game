@@ -29,6 +29,7 @@ export function GameCard({ game }: { game: Game }) {
 }
 
 export function RankedGame({ game, rank, mode = "ranking" }: { game: Game; rank: number; mode?: "ranking" | "updated" }) {
+  const platform = getPlatform(game.platform);
   return (
     <Link className="ranked-game" href={`/games/${game.slug}`} target="_blank" rel="noopener noreferrer">
       <div className="ranked-game__art">
@@ -37,7 +38,10 @@ export function RankedGame({ game, rank, mode = "ranking" }: { game: Game; rank:
       </div>
       <div>
         <strong>{game.title}</strong>
-        <small>{mode === "updated" ? `${game.updated} 更新` : `${game.genre} · ${formatViews(game.views)} 阅读`}</small>
+        <div className="ranked-game__meta">
+          <span className="ranked-game__category" title={`游戏平台：${platform?.label ?? "其他游戏资源"}`}>{game.platform === "switch" ? "Switch" : platform?.shortLabel ?? "其他"}</span>
+          <small title={game.genre}>{mode === "updated" ? `${game.updated} 更新` : `${game.category || game.genre} · ${formatViews(game.views)} 阅读`}</small>
+        </div>
       </div>
     </Link>
   );
