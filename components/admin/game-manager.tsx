@@ -14,9 +14,9 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function blankGame(): Game {
+function blankGame(platform: Platform = "pc"): Game {
   return {
-    slug: "", title: "", englishTitle: "", tagline: "", platform: "pc", category: "动作冒险", genre: "", size: "", updated: today(), badge: "新游", score: 8, views: 0, featured: false, cover: "", description: [],
+    slug: "", title: "", englishTitle: "", tagline: "", platform, category: "动作冒险", genre: "", size: "", updated: today(), badge: "新游", score: 8, views: 0, featured: false, cover: "", description: [],
     requirements: { minimum: [], recommended: [] },
     downloads: [
       { id: "quark", name: "夸克网盘", url: "https://pan.quark.cn/", recommended: true },
@@ -103,11 +103,17 @@ export function GameManager({ initialGames, initialCreate = false }: { initialGa
   const [editing, setEditing] = useState<Game | null>(null);
   const [creating, setCreating] = useState(initialCreate);
   const [query, setQuery] = useState("");
+  const [platform, setPlatform] = useState<Platform | "all">("pc");
+  const [category, setCategory] = useState("");
   const [notice, setNotice] = useState("");
-  const filtered = useMemo(() => games.filter((game) => `${game.title} ${game.englishTitle} ${game.slug}`.toLowerCase().includes(query.toLowerCase())), [games, query]);
+  const platformGames = useMemo(() => games.filter((game) => platform === "all" || game.platform === platform), [games, platform]);
+  const categories = useMemo(() => [...new Set(platformGames.map((game) => game.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN")), [platformGames]);
+  const filtered = useMemo(() => platformGames.filter((game) => (!category || game.category === category) && `${game.title} ${game.englishTitle} ${game.slug}`.toLowerCase().includes(query.trim().toLowerCase())), [platformGames, category, query]);
 
   function saved(game: Game, originalSlug?: string) {
     setGames((items) => originalSlug ? items.map((item) => item.slug === originalSlug ? game : item) : [game, ...items]);
+    if (platform !== "all") setPlatform(game.platform);
+    if (category && category !== game.category) setCategory("");
     setEditing(null); setCreating(false); setNotice(`《${game.title}》已保存`); router.refresh();
   }
 
@@ -118,5 +124,10 @@ export function GameManager({ initialGames, initialCreate = false }: { initialGa
     else { const payload = await responsePayload(response); setNotice(payload.error || "删除失败"); }
   }
 
-  return <><div className="admin-toolbar"><label className="admin-search"><Icon name="search" size={18} /><input aria-label="搜索游戏" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索名称或标识…" /></label><button className="admin-primary-button" type="button" onClick={() => setCreating(true)}>新增游戏<Icon name="arrow-right" size={17} /></button></div>{notice && <p className="admin-form-message is-success" role="status">{notice}</p>}<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>游戏</th><th>平台 / 分类</th><th>版本信息</th><th>状态 / 阅读</th><th>操作</th></tr></thead><tbody>{filtered.map((game) => <tr key={game.slug}><td><div className="admin-game-cell">{game.cover && <Image src={mediaUrl(game.cover)} alt="" width={92} height={43} />}<span><strong>{game.title}</strong><small>{game.englishTitle}</small></span></div></td><td><strong>{platformMeta.find((item) => item.key === game.platform)?.label}</strong><small>{game.category} · {game.genre}</small></td><td><strong>{game.size}</strong><small>{game.updated}</small></td><td><span className="admin-status is-published">{game.badge}</span><small>{game.views.toLocaleString("zh-CN")} 次真实阅读</small>{game.featured && <small>首页精选</small>}</td><td><div className="admin-row-actions"><a href={`/games/${game.slug}`} target="_blank" aria-label={`预览${game.title}`}><Icon name="eye" size={16} /></a><button type="button" onClick={() => setEditing(game)}>编辑</button><button className="is-danger" type="button" onClick={() => remove(game)}>删除</button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="admin-empty">没有匹配的游戏。</div>}</div>{creating && <GameEditor game={blankGame()} isNew onClose={() => setCreating(false)} onSaved={saved} />}{editing && <GameEditor game={editing} isNew={false} onClose={() => setEditing(null)} onSaved={saved} />}</>;
+  return <>
+    <nav className="admin-game-platforms" aria-label="游戏平台分类">
+      {platformMeta.map((item) => <button key={item.key} className={platform === item.key ? "is-active" : ""} type="button" aria-pressed={platform === item.key} onClick={() => { setPlatform(item.key); setCategory(""); }}><span>{item.label}</span><small>{games.filter((game) => game.platform === item.key).length}</small></button>)}
+      <button className={platform === "all" ? "is-active" : ""} type="button" aria-pressed={platform === "all"} onClick={() => { setPlatform("all"); setCategory(""); }}><span>全部游戏</span><small>{games.length}</small></button>
+    </nav>
+    <div className="admin-toolbar"><label className="admin-search"><Icon name="search" size={18} /><input aria-label="搜索游戏" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索名称或标识…" /></label><select className="admin-game-category" aria-label="游戏类型" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">全部游戏类型</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select><span className="admin-game-result" role="status">当前显示 {filtered.length} 款</span><button className="admin-primary-button" type="button" onClick={() => setCreating(true)}>新增游戏<Icon name="arrow-right" size={17} /></button></div>{notice && <p className="admin-form-message is-success" role="status">{notice}</p>}<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>游戏</th><th>平台 / 分类</th><th>版本信息</th><th>状态 / 阅读</th><th>操作</th></tr></thead><tbody>{filtered.map((game) => <tr key={game.slug}><td><div className="admin-game-cell">{game.cover && <Image src={mediaUrl(game.cover)} alt="" width={92} height={43} />}<span><strong>{game.title}</strong><small>{game.englishTitle}</small></span></div></td><td><strong>{platformMeta.find((item) => item.key === game.platform)?.label}</strong><small>{game.category} · {game.genre}</small></td><td><strong>{game.size}</strong><small>{game.updated}</small></td><td><span className="admin-status is-published">{game.badge}</span><small>{game.views.toLocaleString("zh-CN")} 次真实阅读</small>{game.featured && <small>首页精选</small>}</td><td><div className="admin-row-actions"><a href={`/games/${game.slug}`} target="_blank" aria-label={`预览${game.title}`}><Icon name="eye" size={16} /></a><button type="button" onClick={() => setEditing(game)}>编辑</button><button className="is-danger" type="button" onClick={() => remove(game)}>删除</button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="admin-empty">{query || category ? "当前分类没有匹配的游戏，请调整关键词或游戏类型。" : "这个分类还没有游戏，可点击“新增游戏”添加。"}</div>}</div>{creating && <GameEditor game={blankGame(platform === "all" ? "pc" : platform)} isNew onClose={() => setCreating(false)} onSaved={saved} />}{editing && <GameEditor game={editing} isNew={false} onClose={() => setEditing(null)} onSaved={saved} />}</>;
 }
