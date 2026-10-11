@@ -108,7 +108,7 @@ export const platformMeta: PlatformMeta[] = [
   },
   {
     key: "other",
-    label: "其他游戏资源",
+    label: "其他游戏",
     shortLabel: "合集",
     description: "怀旧主机、独立合集与精选游戏资源分享。",
     filters: [],
@@ -342,11 +342,11 @@ export const navItems = [
   ...platformMeta.map((item) => ({ label: item.label, href: `/category/${item.key}` })),
   { label: "MOD", href: "/resources?type=mod" },
   { label: "修改器", href: "/resources?type=trainer" },
-  { label: "工具", href: "/resources?type=tools" },
+  { label: "软件工具", href: "/resources?type=tools" },
   { label: "帮助 / 教程", href: "/help" },
 ];
 
-export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "工具", trainer: "修改器" };
+export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "软件工具", trainer: "修改器" };
 
 export const defaultResources: ResourceItem[] = [
   { id: "controller-bridge", group: "tools", category: "工具软件", name: "手柄映射工具 Controller Bridge", description: "为常见手柄提供按键映射、配置导入和快速切换。", version: "2.4.1", size: "184 MB", updated: "2026-08-27", published: true },
@@ -363,7 +363,7 @@ export const defaultGuides: GuideItem[] = [
   { id: "guide-mobile-install", slug: "mobile-install", category: "mobile", title: "手机游戏安装与数据包说明", summary: "Android 权限、安装包和数据目录说明。", content: "安装前确认系统版本和剩余空间。若资源包含数据包，请按页面说明放入指定目录，并仅授予运行所需权限。", updated: "2026-08-25", published: true },
   { id: "guide-console-storage", slug: "console-storage", category: "ps5", title: "PS5 存储空间与版本说明", summary: "安装前核对容量与资源版本。", content: "请先检查主机可用空间和资源版本说明。更新前保留存档备份，不要在写入过程中关闭设备。", updated: "2026-08-24", published: true },
   { id: "guide-ps4-update", slug: "ps4-update-order", category: "ps4", title: "PS4 更新顺序与数据管理", summary: "主程序、补丁和存档的处理顺序。", content: "先核对主程序版本，再根据说明应用对应补丁。操作存档前应创建备份，避免版本不匹配造成数据不可用。", updated: "2026-08-23", published: true },
-  { id: "guide-other-controller", slug: "other-controller", category: "other", title: "其他平台控制器常见问题", summary: "连接、按键映射与驱动排查。", content: "优先使用系统原生驱动，并在工具页面获取按键映射工具。若按键重复触发，请关闭其他同时运行的映射软件。", updated: "2026-08-22", published: true },
+  { id: "guide-other-controller", slug: "other-controller", category: "other", title: "其他平台控制器常见问题", summary: "连接、按键映射与驱动排查。", content: "优先使用系统原生驱动，并在软件工具页面获取按键映射工具。若按键重复触发，请关闭其他同时运行的映射软件。", updated: "2026-08-22", published: true },
 ];
 
 export const defaultSiteSettings: SiteSettings = {

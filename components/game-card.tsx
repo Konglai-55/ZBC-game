@@ -39,7 +39,7 @@ export function RankedGame({ game, rank, mode = "ranking" }: { game: Game; rank:
       <div>
         <strong>{game.title}</strong>
         <div className="ranked-game__meta">
-          <span className="ranked-game__category" title={`游戏平台：${platform?.label ?? "其他游戏资源"}`}>{game.platform === "switch" ? "Switch" : platform?.shortLabel ?? "其他"}</span>
+          <span className="ranked-game__category" title={`游戏平台：${platform?.label ?? "其他游戏"}`}>{game.platform === "switch" ? "Switch" : platform?.shortLabel ?? "其他"}</span>
           <small title={game.genre}>{mode === "updated" ? `${game.updated} 更新` : `${game.category || game.genre} · ${formatViews(game.views)} 阅读`}</small>
         </div>
       </div>

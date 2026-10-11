@@ -10,8 +10,8 @@ export function ToolResourceStrip({ resources }: { resources: ResourceItem[] }) 
     <section className="tool-resource-strip" aria-labelledby="tool-resource-title">
       <div className="tool-resource-strip__head">
         <div>
-          <span className="eyebrow"><Icon name="wrench" size={15} />工具资源</span>
-          <h2 id="tool-resource-title">常用工具</h2>
+          <span className="eyebrow"><Icon name="wrench" size={15} />软件工具</span>
+          <h2 id="tool-resource-title">常用软件工具</h2>
         </div>
         <Link href="/resources?type=tools">查看全部 <Icon name="arrow-right" size={15} /></Link>
       </div>

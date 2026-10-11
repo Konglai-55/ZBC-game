@@ -15,7 +15,7 @@ export default async function AdminDashboardPage() {
   const pending = feedback.filter((item) => item.status === "pending");
   const stats = [
     { label: "游戏内容", value: games.length, note: `${games.filter((item) => item.featured).length} 个首页精选`, href: "/admin/games", icon: "gamepad" as const },
-    { label: "工具与 MOD", value: resources.length, note: `${resources.filter((item) => item.published).length} 个已发布`, href: "/admin/resources", icon: "wrench" as const },
+    { label: "软件工具与 MOD", value: resources.length, note: `${resources.filter((item) => item.published).length} 个已发布`, href: "/admin/resources", icon: "wrench" as const },
     { label: "帮助教程", value: guides.length, note: `${guides.filter((item) => item.published).length} 个已公开`, href: "/admin/guides", icon: "book" as const },
     { label: "站点文书", value: documents.length, note: `${documents.filter((item) => item.published).length} 个已公开`, href: "/admin/documents", icon: "shield" as const },
     { label: "待处理反馈", value: pending.length, note: `${feedback.length} 条反馈记录`, href: "/admin/feedback", icon: "message" as const },

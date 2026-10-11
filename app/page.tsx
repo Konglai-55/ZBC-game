@@ -74,7 +74,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <section className="section shell resource-banner">
         <div className="resource-banner__icon"><Icon name="wrench" size={30} /></div>
         <div><span>常用资源</span><h2>MOD、补丁与安装教程</h2><p>常用运行库、存档工具、解压和安装问题集中整理。</p></div>
-        <div className="resource-banner__actions"><Link className="button button--primary" href="/resources">浏览工具资源</Link><Link className="button button--ghost" href="/help">进入帮助中心</Link></div>
+        <div className="resource-banner__actions"><Link className="button button--primary" href="/resources">浏览软件工具</Link><Link className="button button--ghost" href="/help">进入帮助中心</Link></div>
       </section>
       <div className="shell"><ToolResourceStrip resources={toolResources} /></div>
     </>

@@ -7,7 +7,7 @@ import { SortToggle } from "@/components/sort-toggle";
 import { resourceGroupLabels } from "@/lib/data";
 import { listResources } from "@/lib/content-store";
 
-export const metadata: Metadata = { title: "MOD、修改器与工具资源", description: "游戏 MOD、修改器、补丁与常用工具。" };
+export const metadata: Metadata = { title: "MOD、修改器与软件工具", description: "游戏 MOD、修改器、补丁与常用软件工具。" };
 
 const resourceGroups = {
   mod: [
@@ -55,20 +55,20 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   });
   const querySuffix = query ? `&q=${encodeURIComponent(q.trim())}` : "";
   const categoryHref = (category: string) => `/resources?type=${active}&category=${encodeURIComponent(category)}${sort === "hot" ? "&sort=hot" : ""}${querySuffix}`;
-  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : "工具"}` : activeCategory;
+  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : resourceGroupLabels.tools}` : activeCategory;
   return (
     <>
-      <PageHero eyebrow="RESOURCE LIBRARY" title="MOD、修改器与工具资源" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
+      <PageHero eyebrow="RESOURCE LIBRARY" title="MOD、修改器与软件工具" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
       <div className="shell section resources-page">
         <div className="resources-toolbar">
           <div className="resource-tabs">
           <Link className={active === "mod" ? "is-active" : ""} href="/resources?type=mod">MOD</Link>
-          <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">工具</Link>
+          <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">{resourceGroupLabels.tools}</Link>
           <Link className={active === "trainer" ? "is-active" : ""} href="/resources?type=trainer">修改器</Link>
           </div>
           <form className="resource-search" action="/resources">
             <Icon name="search" size={17} />
-            <input aria-label="搜索工具和资源" defaultValue={q} name="q" placeholder="搜索资源名称、分类或关键词…" />
+            <input aria-label="搜索软件工具和资源" defaultValue={q} name="q" placeholder="搜索资源名称、分类或关键词…" />
             <input type="hidden" name="type" value={active} />
             <input type="hidden" name="category" value={activeCategory} />
             {sort === "hot" && <input type="hidden" name="sort" value="hot" />}
@@ -91,7 +91,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
               <small><Icon name="calendar" size={14} />{item.updated}</small>
               <Link href={`/resources/${item.id}`}>查看详情 <Icon name="arrow-right" size={15} /></Link>
             </article>
-          )) : <div className="empty-state"><Icon name="wrench" size={28} /><h3>暂时没有已发布资源</h3><p>管理员可以在后台上传 MOD、修改器、工具或补丁。</p></div>}
+          )) : <div className="empty-state"><Icon name="wrench" size={28} /><h3>暂时没有已发布资源</h3><p>管理员可以在后台上传 MOD、修改器、软件工具或补丁。</p></div>}
         </section>
       </div>
     </>

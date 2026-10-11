@@ -9,7 +9,7 @@ import { Icon, type IconName } from "@/components/icon";
 const items: Array<{ href: string; label: string; description: string; icon: IconName }> = [
   { href: "/admin", label: "控制台", description: "数据概览", icon: "grid" },
   { href: "/admin/games", label: "游戏管理", description: "内容与下载线路", icon: "gamepad" },
-  { href: "/admin/resources", label: "资源管理", description: "MOD、工具与补丁", icon: "wrench" },
+  { href: "/admin/resources", label: "资源管理", description: "MOD、修改器与软件工具", icon: "wrench" },
   { href: "/admin/guides", label: "教程管理", description: "帮助内容", icon: "book" },
   { href: "/admin/documents", label: "站点文书", description: "关于、侵权与版权", icon: "shield" },
   { href: "/admin/feedback", label: "反馈处理", description: "催更与失效", icon: "message" },
