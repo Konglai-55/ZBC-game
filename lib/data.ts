@@ -342,11 +342,11 @@ export const navItems = [
   ...platformMeta.map((item) => ({ label: item.label, href: `/category/${item.key}` })),
   { label: "MOD", href: "/resources?type=mod" },
   { label: "修改器", href: "/resources?type=trainer" },
-  { label: "工具 / 补丁", href: "/resources?type=tools" },
+  { label: "工具", href: "/resources?type=tools" },
   { label: "帮助 / 教程", href: "/help" },
 ];
 
-export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "工具 / 补丁", trainer: "修改器" };
+export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "工具", trainer: "修改器" };
 
 export const defaultResources: ResourceItem[] = [
   { id: "controller-bridge", group: "tools", category: "工具软件", name: "手柄映射工具 Controller Bridge", description: "为常见手柄提供按键映射、配置导入和快速切换。", version: "2.4.1", size: "184 MB", updated: "2026-08-27", published: true },
@@ -358,7 +358,7 @@ export const defaultResources: ResourceItem[] = [
 
 export const defaultGuides: GuideItem[] = [
   { id: "guide-extract", slug: "extract-archives", category: "pc", title: "下载后的压缩包应该如何解压？", summary: "分卷压缩、解压目录和常见报错处理。", content: "建议使用新版 7-Zip 或 WinRAR。将全部分卷放在同一目录，从第一个分卷开始解压；路径尽量只使用英文与数字。", updated: "2026-08-28", published: true },
-  { id: "guide-dll", slug: "missing-dll", category: "pc", title: "游戏启动后提示缺少 DLL 文件", summary: "运行库缺失时的安全处理方式。", content: "通常是运行库缺失。请先到工具 / 补丁页面安装 DirectX 与 VC 运行组件，不要单独从陌生网站下载 DLL 文件。", updated: "2026-08-27", published: true },
+  { id: "guide-dll", slug: "missing-dll", category: "pc", title: "游戏启动后提示缺少 DLL 文件", summary: "运行库缺失时的安全处理方式。", content: "通常是运行库缺失。请先到工具页面安装 DirectX 与 VC 运行组件，不要单独从陌生网站下载 DLL 文件。", updated: "2026-08-27", published: true },
   { id: "guide-switch-format", slug: "switch-file-format", category: "switch", title: "Switch 游戏格式与版本匹配", summary: "了解资源格式、系统版本和更新顺序。", content: "下载前先核对资源格式和目标系统版本。主程序、更新和 DLC 应按照页面说明的顺序处理，并保留原始文件备份。", updated: "2026-08-26", published: true },
   { id: "guide-mobile-install", slug: "mobile-install", category: "mobile", title: "手机游戏安装与数据包说明", summary: "Android 权限、安装包和数据目录说明。", content: "安装前确认系统版本和剩余空间。若资源包含数据包，请按页面说明放入指定目录，并仅授予运行所需权限。", updated: "2026-08-25", published: true },
   { id: "guide-console-storage", slug: "console-storage", category: "ps5", title: "PS5 存储空间与版本说明", summary: "安装前核对容量与资源版本。", content: "请先检查主机可用空间和资源版本说明。更新前保留存档备份，不要在写入过程中关闭设备。", updated: "2026-08-24", published: true },

@@ -30,7 +30,7 @@ export function SiteFooter({ settings, documents }: { settings: SiteSettings; do
           <h3>资源服务</h3>
           <div className="footer-links">
             <Link href="/resources?type=mod">MOD</Link>
-            <Link href="/resources?type=tools">工具 / 补丁</Link>
+            <Link href="/resources?type=tools">工具</Link>
             <Link href="/resources?type=trainer">修改器</Link>
             <Link href="/help">帮助 / 教程</Link>
             <Link href="/search">站内搜索</Link>

@@ -55,7 +55,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   });
   const querySuffix = query ? `&q=${encodeURIComponent(q.trim())}` : "";
   const categoryHref = (category: string) => `/resources?type=${active}&category=${encodeURIComponent(category)}${sort === "hot" ? "&sort=hot" : ""}${querySuffix}`;
-  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : "工具与补丁"}` : activeCategory;
+  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : "工具"}` : activeCategory;
   return (
     <>
       <PageHero eyebrow="RESOURCE LIBRARY" title="MOD、修改器与工具资源" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
@@ -63,7 +63,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
         <div className="resources-toolbar">
           <div className="resource-tabs">
           <Link className={active === "mod" ? "is-active" : ""} href="/resources?type=mod">MOD</Link>
-          <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">工具 / 补丁</Link>
+          <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">工具</Link>
           <Link className={active === "trainer" ? "is-active" : ""} href="/resources?type=trainer">修改器</Link>
           </div>
           <form className="resource-search" action="/resources">
