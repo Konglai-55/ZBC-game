@@ -1,4 +1,4 @@
-import type { Game, GuideItem, Platform, PlatformMeta, ResourceItem, SiteSettings } from "@/lib/types";
+import type { Game, GuideItem, Platform, PlatformMeta, ResourceGroup, ResourceItem, SiteSettings } from "@/lib/types";
 
 const commonDownloads: Game["downloads"] = [
   {
@@ -340,10 +340,13 @@ export const games: Game[] = [
 export const navItems = [
   { label: "首页", href: "/" },
   ...platformMeta.map((item) => ({ label: item.label, href: `/category/${item.key}` })),
-  { label: "MOD / 修改器", href: "/resources?type=mod" },
+  { label: "MOD", href: "/resources?type=mod" },
+  { label: "修改器", href: "/resources?type=trainer" },
   { label: "工具 / 补丁", href: "/resources?type=tools" },
   { label: "帮助 / 教程", href: "/help" },
 ];
+
+export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "工具 / 补丁", trainer: "修改器" };
 
 export const defaultResources: ResourceItem[] = [
   { id: "controller-bridge", group: "tools", category: "工具软件", name: "手柄映射工具 Controller Bridge", description: "为常见手柄提供按键映射、配置导入和快速切换。", version: "2.4.1", size: "184 MB", updated: "2026-08-27", published: true },

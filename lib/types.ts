@@ -40,7 +40,7 @@ export type Game = {
   downloads: DownloadSource[];
 };
 
-export type ResourceGroup = "mod" | "tools";
+export type ResourceGroup = "mod" | "tools" | "trainer";
 
 export type ResourceItem = {
   id: string;

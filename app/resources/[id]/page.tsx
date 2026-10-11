@@ -5,6 +5,7 @@ import { Icon } from "@/components/icon";
 import { DownloadPanel } from "@/components/download-panel";
 import { mediaUrl } from "@/lib/media-url";
 import { PageHero } from "@/components/page-hero";
+import { resourceGroupLabels } from "@/lib/data";
 import { findResource, listResources } from "@/lib/content-store";
 
 type ResourceDetailProps = { params: Promise<{ id: string }> };
@@ -36,7 +37,7 @@ export default async function ResourceDetailPage({ params }: ResourceDetailProps
       <PageHero eyebrow="RESOURCE DETAIL" title={resource.name} description={resource.description} icon={resource.group === "mod" ? "sparkles" : "wrench"} />
       <main className="shell section resource-detail-page">
         <nav className="breadcrumb" aria-label="面包屑导航">
-          <Link href="/">首页</Link><Icon name="chevron-down" size={13} /><Link href={`/resources?type=${resource.group}`}>{resource.group === "mod" ? "MOD / 修改器" : "工具 / 补丁"}</Link><Icon name="chevron-down" size={13} /><span>{resource.name}</span>
+          <Link href="/">首页</Link><Icon name="chevron-down" size={13} /><Link href={`/resources?type=${resource.group}`}>{resourceGroupLabels[resource.group]}</Link><Icon name="chevron-down" size={13} /><span>{resource.name}</span>
         </nav>
         <div className="resource-detail-layout">
           <article className="resource-detail-card">
@@ -48,7 +49,7 @@ export default async function ResourceDetailPage({ params }: ResourceDetailProps
               <div><dt>版本</dt><dd>{resource.version || "未注明"}</dd></div>
               <div><dt>大小</dt><dd>{resource.size || "未注明"}</dd></div>
               <div><dt>更新时间</dt><dd>{resource.updated}</dd></div>
-              <div><dt>资源类型</dt><dd>{resource.group === "mod" ? "MOD / 修改器" : "工具 / 补丁"}</dd></div>
+              <div><dt>资源类型</dt><dd>{resourceGroupLabels[resource.group]}</dd></div>
             </dl>
             {resource.imageUrl && <img className="resource-detail-image" src={mediaUrl(resource.imageUrl)} alt={`${resource.name}详情图`} />}
             <section className="resource-detail-description">

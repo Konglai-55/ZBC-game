@@ -4,15 +4,17 @@ import { Icon } from "@/components/icon";
 import { mediaUrl } from "@/lib/media-url";
 import { PageHero } from "@/components/page-hero";
 import { SortToggle } from "@/components/sort-toggle";
+import { resourceGroupLabels } from "@/lib/data";
 import { listResources } from "@/lib/content-store";
 
-export const metadata: Metadata = { title: "MOD 与工具资源", description: "游戏 MOD、修改器、补丁与常用工具。" };
+export const metadata: Metadata = { title: "MOD、修改器与工具资源", description: "游戏 MOD、修改器、补丁与常用工具。" };
 
 const resourceGroups = {
   mod: [
     { title: "MOD整合" },
     { title: "修改器/存档" },
   ],
+  trainer: [{ title: "最新更新" }, { title: "游戏修改器" }],
   tools: [
     { title: "最新更新" },
     { title: "修改软件" },
@@ -36,7 +38,7 @@ function canonicalResourceCategory(category: string) {
 
 export default async function ResourcesPage({ searchParams }: { searchParams: Promise<{ type?: string; sort?: string; category?: string; q?: string }> }) {
   const { type, sort: requestedSort, category: requestedCategory, q = "" } = await searchParams;
-  const active = type === "mod" ? "mod" : "tools";
+  const active = type === "mod" || type === "trainer" ? type : "tools";
   const sort = requestedSort === "hot" ? "hot" : "latest";
   const canonicalRequestedCategory = requestedCategory ? canonicalResourceCategory(requestedCategory) : undefined;
   const defaultCategory = active === "mod" ? "MOD整合" : "最新更新";
@@ -53,15 +55,16 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   });
   const querySuffix = query ? `&q=${encodeURIComponent(q.trim())}` : "";
   const categoryHref = (category: string) => `/resources?type=${active}&category=${encodeURIComponent(category)}${sort === "hot" ? "&sort=hot" : ""}${querySuffix}`;
-  const listHeading = activeCategory === "最新更新" ? sort === "hot" ? "热门工具与补丁" : "最新工具与补丁" : activeCategory;
+  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : "工具与补丁"}` : activeCategory;
   return (
     <>
-      <PageHero eyebrow="RESOURCE LIBRARY" title="MOD 与工具资源" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
+      <PageHero eyebrow="RESOURCE LIBRARY" title="MOD、修改器与工具资源" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
       <div className="shell section resources-page">
         <div className="resources-toolbar">
           <div className="resource-tabs">
-          <Link className={active === "mod" ? "is-active" : ""} href="/resources?type=mod">MOD / 修改器</Link>
+          <Link className={active === "mod" ? "is-active" : ""} href="/resources?type=mod">MOD</Link>
           <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">工具 / 补丁</Link>
+          <Link className={active === "trainer" ? "is-active" : ""} href="/resources?type=trainer">修改器</Link>
           </div>
           <form className="resource-search" action="/resources">
             <Icon name="search" size={17} />
@@ -72,7 +75,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
             <button type="submit">搜索</button>
           </form>
         </div>
-        <div className="filter-row" aria-label={`${active === "mod" ? "MOD / 修改器" : "工具 / 补丁"}分类筛选`}>
+        <div className="filter-row" aria-label={`${resourceGroupLabels[active]}分类筛选`}>
           {resourceGroups[active].map((group) => (
             <Link aria-current={activeCategory === group.title ? "page" : undefined} className={activeCategory === group.title ? "is-active" : ""} href={categoryHref(group.title)} key={group.title}>{group.title}</Link>
           ))}
@@ -88,7 +91,7 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
               <small><Icon name="calendar" size={14} />{item.updated}</small>
               <Link href={`/resources/${item.id}`}>查看详情 <Icon name="arrow-right" size={15} /></Link>
             </article>
-          )) : <div className="empty-state"><Icon name="wrench" size={28} /><h3>暂时没有已发布资源</h3><p>管理员可以在后台上传 MOD、工具或补丁。</p></div>}
+          )) : <div className="empty-state"><Icon name="wrench" size={28} /><h3>暂时没有已发布资源</h3><p>管理员可以在后台上传 MOD、修改器、工具或补丁。</p></div>}
         </section>
       </div>
     </>

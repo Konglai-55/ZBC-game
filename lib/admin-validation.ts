@@ -123,7 +123,7 @@ export function parseGame(value: unknown): Game {
 export function parseResource(value: unknown): ResourceItem {
   const body = object(value);
   const group = text(body.group, "资源分组") as ResourceGroup;
-  if (group !== "mod" && group !== "tools") throw new Error("资源分组无效");
+  if (group !== "mod" && group !== "tools" && group !== "trainer") throw new Error("资源分组无效");
   return {
     id: slug(body.id, "资源标识"),
     group,

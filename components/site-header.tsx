@@ -18,6 +18,7 @@ const navIcons: Record<string, IconName> = {
   "/category/other": "grid",
   "/resources?type=mod": "sparkles",
   "/resources?type=tools": "wrench",
+  "/resources?type=trainer": "wrench",
   "/help": "help",
 };
 
