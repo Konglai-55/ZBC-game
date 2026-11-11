@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { getVisiblePages } from "@/lib/pagination";
 
 type GamePaginationProps = {
   currentPage: number;
@@ -25,7 +26,7 @@ export function GamePagination({ currentPage, pageCount, hrefForPage, ariaLabel 
         </span>
       )}
       <div className="game-pagination__pages">
-        {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+        {getVisiblePages(currentPage, pageCount).map((page) => (
           <Link className={page === currentPage ? "is-active" : ""} aria-current={page === currentPage ? "page" : undefined} href={hrefForPage(page)} key={page}>{page}</Link>
         ))}
       </div>

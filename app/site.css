@@ -195,7 +195,7 @@ h1, h2, h3, p { margin-top: 0; }
 .discovery-card__body small { display: flex; align-items: center; gap: 5px; margin-top: 5px; color: #9aa0ad; font-size: 11px; }
 .discovery-card__body small svg { flex: 0 0 auto; color: #a5aec1; }
 .discovery-empty { min-height: 72px; grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 14px; }
-.discovery-pagination { display: flex; grid-column: 1 / -1; justify-content: center; align-items: center; gap: 18px; padding-top: 2px; }
+.discovery-pagination { display: flex; flex-wrap: wrap; grid-column: 1 / -1; justify-content: center; align-items: center; gap: 18px; padding-top: 2px; }
 .discovery-pagination button { min-width: 28px; height: 28px; display: grid; place-items: center; padding: 0; color: #b4bdce; background: transparent; border: 0; border-radius: 999px; font-size: 14px; cursor: pointer; transition: color .18s ease, background .18s ease; }
 .discovery-pagination button:hover:not(:disabled) { color: var(--purple); background: var(--purple-soft); }
 .discovery-pagination button.is-active { color: #fff; background: var(--purple); }
@@ -317,7 +317,7 @@ h1, h2, h3, p { margin-top: 0; }
 .category-search--prominent button { min-height: 42px; padding-inline: 20px; font-size: 14px; }
 .game-grid--category { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .game-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 26px; }
-.game-pagination__pages { display: flex; align-items: center; gap: 6px; }
+.game-pagination__pages { display: flex; flex-wrap: wrap; justify-content: center; max-width: 100%; align-items: center; gap: 6px; }
 .game-pagination a, .game-pagination__arrow { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 9px; color: var(--text-muted); background: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 700; transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
 .game-pagination a:hover { color: var(--purple); border-color: #cfc5ff; background: var(--purple-soft); transform: translateY(-1px); }
 .game-pagination a.is-active { color: #fff; background: var(--purple); border-color: var(--purple); }
