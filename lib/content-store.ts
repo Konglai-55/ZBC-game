@@ -1,8 +1,9 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { defaultGuides, defaultResources, defaultSiteSettings, games as defaultGames } from "@/lib/data";
+import { defaultGuides, defaultResources, defaultSiteSettings, games as defaultGames, resourceReferenceId } from "@/lib/data";
 import { defaultLegalDocuments } from "@/lib/legal-defaults";
 import { deleteObject, listObjects, objectPublicUrl, putObject } from "@/lib/object-storage";
 import type { FeedbackRecord, Game, GuideItem, LegalDocumentId, LegalDocumentItem, ResourceItem, SiteSettings, UploadRecord } from "@/lib/types";
@@ -71,10 +72,18 @@ export async function findGame(slug: string): Promise<Game | undefined> {
   return (await listGames()).find((game) => game.slug === slug);
 }
 
+async function verifyResourceIds(ids: string[] | undefined, previousIds: string[] = []) {
+  const added = ids?.filter((id) => !previousIds.includes(id));
+  if (!added?.length) return;
+  const choices = new Set((await listResources()).filter(({ group }) => group !== "tools").map(resourceReferenceId));
+  if (added.some((id) => !choices.has(id))) throw new Error("所选资源已删除或不属于 MOD、修改器、存档，请刷新后重新选择");
+}
+
 export async function createGame(game: Game): Promise<Game> {
   const created = { ...game, views: 0 };
-  await updateJson("games.json", defaultGames, (items) => {
+  await updateJson("games.json", defaultGames, async (items) => {
     if (items.some((item) => item.slug === created.slug)) throw new Error("游戏标识已存在");
+    await verifyResourceIds(created.resourceIds);
     return [created, ...items];
   });
   return created;
@@ -86,8 +95,9 @@ export async function updateGame(originalSlug: string, game: Game): Promise<Game
     const index = items.findIndex((item) => item.slug === originalSlug);
     if (index < 0) throw new Error("游戏不存在");
     if (game.slug !== originalSlug && items.some((item) => item.slug === game.slug)) throw new Error("新的游戏标识已存在");
+    await verifyResourceIds(game.resourceIds, items[index].resourceIds);
     const next = [...items];
-    next[index] = { ...game, views: 0 };
+    next[index] = { ...game, resourceIds: game.resourceIds ?? items[index].resourceIds, views: 0 };
     await writeJson("games.json", next);
 
     if (game.slug !== originalSlug) {
@@ -155,23 +165,24 @@ export async function findResource(id: string): Promise<ResourceItem | undefined
 }
 
 export async function createResource(resource: ResourceItem): Promise<ResourceItem> {
+  const created = { ...resource, referenceId: randomUUID() };
   await updateJson("resources.json", defaultResources, (items) => {
     if (items.some((item) => item.id === resource.id)) throw new Error("资源标识已存在");
-    return [resource, ...items];
+    return [created, ...items];
   });
-  return resource;
+  return created;
 }
 
 export async function updateResource(id: string, resource: ResourceItem): Promise<ResourceItem> {
-  await updateJson("resources.json", defaultResources, (items) => {
+  const updated = await updateJson("resources.json", defaultResources, (items) => {
     const index = items.findIndex((item) => item.id === id);
     if (index < 0) throw new Error("资源不存在");
     if (resource.id !== id && items.some((item) => item.id === resource.id)) throw new Error("新的资源标识已存在");
     const next = [...items];
-    next[index] = resource;
+    next[index] = { ...resource, referenceId: resourceReferenceId(items[index]) };
     return next;
   });
-  return resource;
+  return updated.find((item) => item.id === resource.id)!;
 }
 
 export async function deleteResource(id: string): Promise<boolean> {

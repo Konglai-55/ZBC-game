@@ -346,7 +346,12 @@ export const navItems = [
   { label: "帮助 / 教程", href: "/help" },
 ];
 
-export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "软件工具", trainer: "修改器" };
+export const gameResourceGroups = ["mod", "trainer", "save"] as const;
+export const resourceGroupLabels: Record<ResourceGroup, string> = { mod: "MOD", tools: "软件工具", trainer: "修改器", save: "存档" };
+
+export function resourceReferenceId(resource: Pick<ResourceItem, "id" | "referenceId">) {
+  return resource.referenceId ?? resource.id;
+}
 
 export const defaultResources: ResourceItem[] = [
   { id: "controller-bridge", group: "tools", category: "工具软件", name: "手柄映射工具 Controller Bridge", description: "为常见手柄提供按键映射、配置导入和快速切换。", version: "2.4.1", size: "184 MB", updated: "2026-08-27", published: true },

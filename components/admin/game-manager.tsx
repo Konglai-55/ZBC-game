@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
-import { platformMeta } from "@/lib/data";
-import type { DownloadSource, Game, Platform } from "@/lib/types";
+import { gameResourceGroups, platformMeta, resourceGroupLabels } from "@/lib/data";
+import type { DownloadSource, Game, Platform, ResourceItem } from "@/lib/types";
 import { mediaUrl } from "@/lib/media-url";
 
 const downloadIds: DownloadSource["id"][] = ["quark", "baidu", "xunlei", "mobile"];
@@ -31,13 +31,51 @@ async function responsePayload(response: Response) {
   return await response.json() as { data?: Game; error?: string };
 }
 
-function GameEditor({ game, isNew, onClose, onSaved }: { game: Game; isNew: boolean; onClose: () => void; onSaved: (game: Game, originalSlug?: string) => void }) {
+type ResourceChoice = Pick<ResourceItem, "id" | "name" | "group" | "version" | "published"> & { referenceId: string };
+
+function RelatedResourcePicker({ resources, selected, onChange }: {
+  resources: ResourceChoice[];
+  selected: string[];
+  onChange: (id: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const term = query.trim().toLowerCase();
+  return <fieldset>
+    <legend>关联资源</legend>
+    <p className="admin-field-help">从资源管理中勾选本游戏的 MOD、修改器或存档。前台只显示已发布的资源。</p>
+    <label>查找资源<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入资源名称或标识…" /></label>
+    <div className="admin-game-resource-grid">
+      {gameResourceGroups.map((group) => {
+        const choices = resources.filter((item) => item.group === group);
+        const visible = choices.filter((item) => selected.includes(item.referenceId) || `${item.name} ${item.id}`.toLowerCase().includes(term));
+        return <section key={group} aria-labelledby={`resource-picker-${group}`}>
+          <h3 id={`resource-picker-${group}`}>{resourceGroupLabels[group]}<small>已选 {choices.filter(({ referenceId }) => selected.includes(referenceId)).length}</small></h3>
+          {visible.length ? <div className="admin-game-resource-options">
+            {visible.map((item) => <label className="admin-checkbox" key={item.id}>
+              <input type="checkbox" checked={selected.includes(item.referenceId)} onChange={() => onChange(item.referenceId)} />
+              <span>{item.name}<small>{item.version}{item.published ? "" : " · 草稿"}</small></span>
+            </label>)}
+          </div> : <p>{choices.length ? "没有匹配的资源" : "资源库暂无此类资源"}</p>}
+        </section>;
+      })}
+    </div>
+  </fieldset>;
+}
+
+function GameEditor({ game, resources, isNew, onClose, onSaved }: {
+  game: Game; resources: ResourceChoice[]; isNew: boolean; onClose: () => void; onSaved: (game: Game, originalSlug?: string) => void;
+}) {
   const [cover, setCover] = useState(game.cover || "");
   const [qrCodes, setQrCodes] = useState<Record<DownloadSource["id"], string>>(() => Object.fromEntries(downloadIds.map((id) => [id, game.downloads.find((source) => source.id === id)?.qrCode || ""])) as Record<DownloadSource["id"], string>);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [platform, setPlatform] = useState<Platform>(game.platform);
+  const [resourceIds, setResourceIds] = useState(() => (game.resourceIds ?? []).filter((id) => resources.some((item) => item.referenceId === id)));
+
+  function toggleResource(id: string) {
+    setResourceIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
 
   async function uploadCover(file?: File) {
     if (!file) return;
@@ -76,7 +114,7 @@ function GameEditor({ game, isNew, onClose, onSaved }: { game: Game; isNew: bool
     }).filter((source): source is NonNullable<typeof source> => Boolean(source));
     const payload = {
       slug: data.get("slug"), title: data.get("title"), englishTitle: data.get("englishTitle"), tagline: data.get("tagline"), platform: data.get("platform"), category: data.get("category"), genre: data.get("genre"), size: data.get("size"), updated: data.get("updated"), badge: data.get("badge"), score: Number(data.get("score")), featured: data.get("featured") === "on", cover, description: data.get("description"),
-      requirements: { minimum: data.get("minimum"), recommended: data.get("recommended") }, downloads,
+      requirements: { minimum: data.get("minimum"), recommended: data.get("recommended") }, downloads, resourceIds,
     };
     const response = await fetch(isNew ? "/api/admin/games" : `/api/admin/games/${encodeURIComponent(game.slug)}`, { method: isNew ? "POST" : "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const result = await responsePayload(response);
@@ -92,12 +130,15 @@ function GameEditor({ game, isNew, onClose, onSaved }: { game: Game; isNew: bool
     <fieldset><legend>基本信息</legend><div className="admin-form-grid admin-form-grid--3"><label>中文名称<input name="title" defaultValue={game.title} required /></label><label>英文名称<input name="englishTitle" defaultValue={game.englishTitle} required /></label><label>地址标识<input name="slug" defaultValue={game.slug} placeholder="game-name" required /></label><label>游戏平台<select name="platform" value={platform} onChange={(event) => setPlatform(event.target.value as Platform)}>{platformMeta.map((item) => <option value={item.key} key={item.key}>{item.label}</option>)}</select></label><label>分类<input name="category" defaultValue={game.category} required /></label><label>具体类型<input name="genre" defaultValue={game.genre} required /></label><label>文件大小<input name="size" defaultValue={game.size} placeholder="例如 25 GB" required /></label><label>更新时间<input name="updated" type="date" defaultValue={game.updated} required /></label><label>状态标签<select name="badge" defaultValue={game.badge}><option>新游</option><option>更新</option><option>热门</option><option>精选</option></select></label><label>评分<input name="score" type="number" min="0" max="10" step="0.1" defaultValue={game.score} required /></label><label>真实阅读量（自动统计）<input type="number" value={game.views} readOnly title="由前台真实访问自动统计" /></label><label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={game.featured} /><span>设为首页精选</span></label></div><label>一句话介绍<textarea name="tagline" rows={2} defaultValue={game.tagline} required /></label><label>游戏介绍（每行一个段落）<textarea name="description" rows={5} defaultValue={game.description.join("\n")} required /></label></fieldset>
     <fieldset><legend>封面图片</legend><div className="admin-cover-upload">{cover ? <Image src={mediaUrl(cover)} alt="当前游戏封面" width={320} height={150} /> : <div><Icon name="gamepad" size={28} />尚未上传封面</div>}<div><label className="admin-file-button"><Icon name="download" size={17} />{uploading ? "正在上传…" : "选择并上传封面"}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={uploading} onChange={(event) => uploadCover(event.target.files?.[0])} /></label><input aria-label="封面对象存储地址" value={cover} readOnly placeholder="上传后自动填写" /><small>支持 JPG、PNG、WebP、GIF；图片将直接上传至对象存储。</small></div></div></fieldset>
     {platform === "pc" && <fieldset><legend>系统配置</legend><div className="admin-form-grid"><label>最低配置（每行一项）<textarea name="minimum" rows={6} defaultValue={game.requirements?.minimum.join("\n")} /></label><label>推荐配置（每行一项）<textarea name="recommended" rows={6} defaultValue={game.requirements?.recommended.join("\n")} /></label></div></fieldset>}
+    <RelatedResourcePicker resources={resources} selected={resourceIds} onChange={toggleResource} />
     <fieldset><legend>网盘二维码</legend><p className="admin-field-help">上传对应网盘 App 的二维码图片，前台点击下载时会展示该二维码，不再生成或直接打开下载链接。未上传二维码或未启用的网盘线路不会显示。</p><div className="admin-download-editors">{downloadIds.map((id) => { const source = game.downloads.find((item) => item.id === id); const label = id === "quark" ? "夸克网盘" : id === "baidu" ? "百度网盘" : id === "xunlei" ? "迅雷云盘" : "移动云盘"; const qrCode = qrCodes[id]; return <div key={id}><label className="admin-checkbox"><input name={`${id}Enabled`} type="checkbox" defaultChecked={Boolean(source)} /><span>{label} · 启用此线路</span></label><label>显示名称<input name={`${id}Name`} defaultValue={source?.name || label} required /></label><div className="admin-qr-upload">{qrCode ? <Image src={mediaUrl(qrCode)} alt={`${label}二维码`} width={92} height={92} /> : <div className="admin-qr-upload__empty"><Icon name="cloud" size={24} />尚未上传二维码</div>}<label className="admin-file-button"><Icon name="upload" size={17} />{uploading ? "正在上传…" : "上传二维码"}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={uploading} onChange={(event) => uploadQrCode(id, event.target.files?.[0])} /></label></div><label>提取码 / 文本<input name={`${id}Code`} defaultValue={source?.code} /></label><label className="admin-checkbox"><input name={`${id}Recommended`} type="checkbox" defaultChecked={source?.recommended} /><span>标记为推荐线路</span></label></div>; })}</div></fieldset>
     {message && <p className="admin-form-message is-error" role="alert">{message}</p>}<footer><button className="admin-secondary-button" type="button" onClick={onClose}>取消</button><button className="admin-primary-button" type="submit" disabled={saving || uploading}>{saving ? "正在保存…" : "保存游戏"}<Icon name="check" size={17} /></button></footer>
   </form></section></div>;
 }
 
-export function GameManager({ initialGames, initialCreate = false }: { initialGames: Game[]; initialCreate?: boolean }) {
+export function GameManager({ initialGames, resources, initialCreate = false }: {
+  initialGames: Game[]; resources: ResourceChoice[]; initialCreate?: boolean;
+}) {
   const router = useRouter();
   const [games, setGames] = useState(initialGames);
   const [editing, setEditing] = useState<Game | null>(null);
@@ -129,5 +170,5 @@ export function GameManager({ initialGames, initialCreate = false }: { initialGa
       {platformMeta.map((item) => <button key={item.key} className={platform === item.key ? "is-active" : ""} type="button" aria-pressed={platform === item.key} onClick={() => { setPlatform(item.key); setCategory(""); }}><span>{item.label}</span><small>{games.filter((game) => game.platform === item.key).length}</small></button>)}
       <button className={platform === "all" ? "is-active" : ""} type="button" aria-pressed={platform === "all"} onClick={() => { setPlatform("all"); setCategory(""); }}><span>全部游戏</span><small>{games.length}</small></button>
     </nav>
-    <div className="admin-toolbar"><label className="admin-search"><Icon name="search" size={18} /><input aria-label="搜索游戏" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索名称或标识…" /></label><select className="admin-game-category" aria-label="游戏类型" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">全部游戏类型</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select><span className="admin-game-result" role="status">当前显示 {filtered.length} 款</span><button className="admin-primary-button" type="button" onClick={() => setCreating(true)}>新增游戏<Icon name="arrow-right" size={17} /></button></div>{notice && <p className="admin-form-message is-success" role="status">{notice}</p>}<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>游戏</th><th>平台 / 分类</th><th>版本信息</th><th>状态 / 阅读</th><th>操作</th></tr></thead><tbody>{filtered.map((game) => <tr key={game.slug}><td><div className="admin-game-cell">{game.cover && <Image src={mediaUrl(game.cover)} alt="" width={92} height={43} />}<span><strong>{game.title}</strong><small>{game.englishTitle}</small></span></div></td><td><strong>{platformMeta.find((item) => item.key === game.platform)?.label}</strong><small>{game.category} · {game.genre}</small></td><td><strong>{game.size}</strong><small>{game.updated}</small></td><td><span className="admin-status is-published">{game.badge}</span><small>{game.views.toLocaleString("zh-CN")} 次真实阅读</small>{game.featured && <small>首页精选</small>}</td><td><div className="admin-row-actions"><a href={`/games/${game.slug}`} target="_blank" aria-label={`预览${game.title}`}><Icon name="eye" size={16} /></a><button type="button" onClick={() => setEditing(game)}>编辑</button><button className="is-danger" type="button" onClick={() => remove(game)}>删除</button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="admin-empty">{query || category ? "当前分类没有匹配的游戏，请调整关键词或游戏类型。" : "这个分类还没有游戏，可点击“新增游戏”添加。"}</div>}</div>{creating && <GameEditor game={blankGame(platform === "all" ? "pc" : platform)} isNew onClose={() => setCreating(false)} onSaved={saved} />}{editing && <GameEditor game={editing} isNew={false} onClose={() => setEditing(null)} onSaved={saved} />}</>;
+    <div className="admin-toolbar"><label className="admin-search"><Icon name="search" size={18} /><input aria-label="搜索游戏" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索名称或标识…" /></label><select className="admin-game-category" aria-label="游戏类型" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">全部游戏类型</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select><span className="admin-game-result" role="status">当前显示 {filtered.length} 款</span><button className="admin-primary-button" type="button" onClick={() => setCreating(true)}>新增游戏<Icon name="arrow-right" size={17} /></button></div>{notice && <p className="admin-form-message is-success" role="status">{notice}</p>}<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>游戏</th><th>平台 / 分类</th><th>版本信息</th><th>状态 / 阅读</th><th>操作</th></tr></thead><tbody>{filtered.map((game) => <tr key={game.slug}><td><div className="admin-game-cell">{game.cover && <Image src={mediaUrl(game.cover)} alt="" width={92} height={43} />}<span><strong>{game.title}</strong><small>{game.englishTitle}</small></span></div></td><td><strong>{platformMeta.find((item) => item.key === game.platform)?.label}</strong><small>{game.category} · {game.genre}</small></td><td><strong>{game.size}</strong><small>{game.updated}</small></td><td><span className="admin-status is-published">{game.badge}</span><small>{game.views.toLocaleString("zh-CN")} 次真实阅读</small>{game.featured && <small>首页精选</small>}</td><td><div className="admin-row-actions"><a href={`/games/${game.slug}`} target="_blank" aria-label={`预览${game.title}`}><Icon name="eye" size={16} /></a><button type="button" onClick={() => setEditing(game)}>编辑</button><button className="is-danger" type="button" onClick={() => remove(game)}>删除</button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="admin-empty">{query || category ? "当前分类没有匹配的游戏，请调整关键词或游戏类型。" : "这个分类还没有游戏，可点击“新增游戏”添加。"}</div>}</div>{creating && <GameEditor resources={resources} game={blankGame(platform === "all" ? "pc" : platform)} isNew onClose={() => setCreating(false)} onSaved={saved} />}{editing && <GameEditor resources={resources} game={editing} isNew={false} onClose={() => setEditing(null)} onSaved={saved} />}</>;
 }

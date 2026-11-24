@@ -38,12 +38,14 @@ export type Game = {
     recommended: string[];
   };
   downloads: DownloadSource[];
+  resourceIds?: string[];
 };
 
-export type ResourceGroup = "mod" | "tools" | "trainer";
+export type ResourceGroup = "mod" | "tools" | "trainer" | "save";
 
 export type ResourceItem = {
   id: string;
+  referenceId?: string;
   group: ResourceGroup;
   category: string;
   name: string;

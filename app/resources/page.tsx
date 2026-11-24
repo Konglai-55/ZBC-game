@@ -15,6 +15,7 @@ const resourceGroups = {
     { title: "修改器/存档" },
   ],
   trainer: [{ title: "最新更新" }, { title: "游戏修改器" }],
+  save: [{ title: "最新更新" }, { title: "游戏存档" }],
   tools: [
     { title: "最新更新" },
     { title: "修改软件" },
@@ -38,7 +39,7 @@ function canonicalResourceCategory(category: string) {
 
 export default async function ResourcesPage({ searchParams }: { searchParams: Promise<{ type?: string; sort?: string; category?: string; q?: string }> }) {
   const { type, sort: requestedSort, category: requestedCategory, q = "" } = await searchParams;
-  const active = type === "mod" || type === "trainer" ? type : "tools";
+  const active = type === "mod" || type === "trainer" || type === "save" ? type : "tools";
   const sort = requestedSort === "hot" ? "hot" : "latest";
   const canonicalRequestedCategory = requestedCategory ? canonicalResourceCategory(requestedCategory) : undefined;
   const defaultCategory = active === "mod" ? "MOD整合" : "最新更新";
@@ -55,16 +56,16 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   });
   const querySuffix = query ? `&q=${encodeURIComponent(q.trim())}` : "";
   const categoryHref = (category: string) => `/resources?type=${active}&category=${encodeURIComponent(category)}${sort === "hot" ? "&sort=hot" : ""}${querySuffix}`;
-  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${active === "trainer" ? "修改器" : resourceGroupLabels.tools}` : activeCategory;
+  const listHeading = activeCategory === "最新更新" ? `${sort === "hot" ? "热门" : "最新"}${resourceGroupLabels[active]}` : activeCategory;
   return (
     <>
       <PageHero eyebrow="RESOURCE LIBRARY" title="MOD、修改器与软件工具" description="让游戏更好玩，也让安装与运行少走弯路。" icon="wrench" />
       <div className="shell section resources-page">
         <div className="resources-toolbar">
           <div className="resource-tabs">
-          <Link className={active === "mod" ? "is-active" : ""} href="/resources?type=mod">MOD</Link>
-          <Link className={active === "tools" ? "is-active" : ""} href="/resources?type=tools">{resourceGroupLabels.tools}</Link>
-          <Link className={active === "trainer" ? "is-active" : ""} href="/resources?type=trainer">修改器</Link>
+            {Object.entries(resourceGroupLabels).map(([key, label]) =>
+              <Link key={key} className={active === key ? "is-active" : ""} aria-current={active === key ? "page" : undefined} href={`/resources?type=${key}`}>{label}</Link>,
+            )}
           </div>
           <form className="resource-search" action="/resources">
             <Icon name="search" size={17} />

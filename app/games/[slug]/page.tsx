@@ -8,10 +8,10 @@ import { FeedbackActions } from "@/components/feedback-actions";
 import { GameArtwork } from "@/components/game-artwork";
 import { GameViewCounter } from "@/components/game-view-counter";
 import { Icon } from "@/components/icon";
-import { getPlatform } from "@/lib/data";
-import { findGame, getSiteSettings, listGames } from "@/lib/content-store";
+import { gameResourceGroups, getPlatform, resourceGroupLabels, resourceReferenceId } from "@/lib/data";
+import { findGame, getSiteSettings, listGames, listResources } from "@/lib/content-store";
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ download?: string | string[] }> };
 
 export async function generateStaticParams() {
   return (await listGames()).map((game) => ({ slug: game.slug }));
@@ -23,13 +23,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: game?.title ?? "游戏详情", description: game?.tagline };
 }
 
-export default async function GameDetailPage({ params }: PageProps) {
+export default async function GameDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const game = await findGame(slug);
   if (!game) notFound();
   const platform = getPlatform(game.platform);
-  const [games, settings] = await Promise.all([listGames(), getSiteSettings()]);
+  const [games, settings, resources, { download }] = await Promise.all([
+    listGames(), getSiteSettings(), game.resourceIds?.length ? listResources() : [], searchParams,
+  ]);
   const recommendationGames = games.filter((item) => item.slug !== game.slug);
+  const publishedById = new Map(resources.filter(({ published }) => published).map((item) => [resourceReferenceId(item), item]));
+  const related = (game.resourceIds ?? []).flatMap((id) => publishedById.get(id) ?? []);
+  const downloadTabs = gameResourceGroups.map((key) => ({
+    key, label: resourceGroupLabels[key], items: related.filter(({ group }) => group === key),
+  })).filter(({ items }) => items.length);
+  const selectedDownload = downloadTabs.find(({ key }) => key === download);
+  const gameHref = `/games/${game.slug}`;
 
   return (
     <>
@@ -65,7 +74,16 @@ export default async function GameDetailPage({ params }: PageProps) {
 
           <section className="content-section" id="downloads">
             <div className="content-section__title"><span>{game.requirements ? "03" : "02"}</span><div><small>DOWNLOAD</small><h2>资源下载</h2></div></div>
-            <DownloadPanel game={game} />
+            {downloadTabs.length > 0 && <nav className="game-download-tabs" aria-label="游戏资源分类">
+              <Link href={`${gameHref}#downloads`} prefetch={false} aria-current={selectedDownload ? undefined : "page"}>本体</Link>
+              {downloadTabs.map(({ key, label }) => <Link key={key} href={`${gameHref}?download=${key}#downloads`} prefetch={false} aria-current={selectedDownload?.key === key ? "page" : undefined}>{label}</Link>)}
+            </nav>}
+            {selectedDownload ? <ul className="game-related-resources" aria-label={selectedDownload.label}>
+              {selectedDownload.items.map((item) => <li key={item.id}>
+                <div><strong>{item.name}</strong><small>{[item.version, item.size, item.updated].filter(Boolean).join(" · ")}</small></div>
+                <Link href={`/resources/${item.id}`} aria-label={`查看资源：${item.name}`}>查看资源 <Icon name="arrow-right" size={15} /></Link>
+              </li>)}
+            </ul> : <DownloadPanel game={game} />}
             <FeedbackActions gameSlug={game.slug} />
             <div className="support-note"><Icon name="help" /><div><strong>下载、解压或运行遇到问题？</strong><p>帮助中心整理了电脑、Switch、手机、PS5、PS4 与其他游戏的常见问题。</p></div><Link href="/help">查看教程 <Icon name="arrow-right" size={16} /></Link></div>
             <div className="site-identification" aria-label="网站信息">

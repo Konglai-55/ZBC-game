@@ -99,6 +99,10 @@ export function parseGame(value: unknown): Game {
   if (!badges.includes(badge)) throw new Error("状态标签无效");
   const minimum = lines(object(body.requirements ?? {}).minimum, "最低配置");
   const recommended = lines(object(body.requirements ?? {}).recommended, "推荐配置");
+  const resourceIds = body.resourceIds;
+  if (resourceIds !== undefined && (!Array.isArray(resourceIds) || resourceIds.length > 100)) {
+    throw new Error("关联资源最多可选 100 个");
+  }
   return {
     slug: slug(body.slug, "游戏标识"),
     title: text(body.title, "中文名称", { required: true, max: 100 }),
@@ -117,13 +121,14 @@ export function parseGame(value: unknown): Game {
     description: lines(body.description, "游戏介绍"),
     requirements: platform === "pc" && (minimum.length || recommended.length) ? { minimum, recommended } : undefined,
     downloads: downloads(body.downloads),
+    resourceIds: resourceIds?.length ? [...new Set(resourceIds.map((value) => slug(value, "关联资源标识")))] : resourceIds,
   };
 }
 
 export function parseResource(value: unknown): ResourceItem {
   const body = object(value);
   const group = text(body.group, "资源分组") as ResourceGroup;
-  if (group !== "mod" && group !== "tools" && group !== "trainer") throw new Error("资源分组无效");
+  if (group !== "mod" && group !== "tools" && group !== "trainer" && group !== "save") throw new Error("资源分组无效");
   return {
     id: slug(body.id, "资源标识"),
     group,
