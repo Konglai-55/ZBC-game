@@ -3,5 +3,6 @@
 .wrangler/
 /.next/
 /node_modules/
+/data/site-activity/
 .env.local
 .env.*.local

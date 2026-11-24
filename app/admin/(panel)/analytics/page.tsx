@@ -4,6 +4,8 @@ import { Icon } from "@/components/icon";
 import { requireAdminPage } from "@/lib/admin-auth";
 import { listGames } from "@/lib/content-store";
 import { readSiteAnalytics, trafficDates, type TrafficDay } from "@/lib/site-analytics";
+import { readSiteActivity } from "@/lib/site-activity-store";
+import { ContentPerformance } from "./content-performance";
 import { TrafficChart } from "./traffic-chart";
 import styles from "./analytics.module.css";
 
@@ -75,15 +77,57 @@ function Ranking({ selected, period, rows, label, total }: {
   );
 }
 
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ range?: string; ranking?: string }> }) {
+function OverviewDetails({ activity, dayCount, comparison }: {
+  activity: Awaited<ReturnType<typeof readSiteActivity>>;
+  dayCount: number;
+  comparison?: { previous: number; recent: number; peakHour: number };
+}) {
+  const change = comparison && comparison.previous ? 100 * (comparison.recent - comparison.previous) / comparison.previous : null;
+  return <div className={styles.contentGrid}>
+    <section className={styles.detail}>
+      <header><h2>近 7 天流量对比</h2><small>截至昨天 · 页面浏览</small></header>
+      {comparison ? <div className={styles.service}>
+        <span>最近 7 天<strong>{number.format(comparison.recent)}</strong></span>
+        <span>再前 7 天<strong>{number.format(comparison.previous)}</strong></span>
+        <span>变化<strong>{change === null ? "—" : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}</strong></span>
+      </div> : <p className={styles.empty}>需要连续 14 天的日志记录。</p>}
+      {comparison && comparison.peakHour >= 0 && <p className={styles.cardNote}>最近 7 天最活跃时段 · {String(comparison.peakHour).padStart(2, "0")}:00–{String(comparison.peakHour + 1).padStart(2, "0")}:00</p>}
+    </section>
+    <section className={styles.detail}>
+      <header><h2>浏览器访客</h2><small>{activity.recordedDays} / {dayCount} 天有记录</small></header>
+      {activity.recordedDays ? <div className={styles.service}>
+        <span>去重访客<strong>{number.format(activity.totalVisitors)}</strong></span>
+        <span>新访客<strong>{number.format(activity.newVisitors)}</strong></span>
+        <span>回访访客<strong>{number.format(activity.returningVisitors)}</strong></span>
+      </div> : <p className={styles.empty}>功能启用后开始计数，可切换到「今天」查看。</p>}
+      {!!activity.recordedDays && <p className={styles.cardNote}>同一浏览器在所选范围内只计一次。</p>}
+    </section>
+  </div>;
+}
+
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ range?: string; ranking?: string; tab?: string }> }) {
   await requireAdminPage();
-  const { range, ranking } = await searchParams;
+  const { range, ranking, tab } = await searchParams;
+  const content = tab === "content";
   const period = ranges.find(({ key }) => key === range) ?? ranges[1];
   const selectedRanking = rankings.find(({ key }) => key === ranking)?.key ?? "pages";
-  const [snapshot, games] = await Promise.all([readSiteAnalytics(), listGames()]);
   const today = period.key === "today";
   const now = new Date();
   const dates = trafficDates(period.days + Number(!today), now).slice(0, period.days);
+  const [snapshot, games, activity] = await Promise.all([
+    readSiteAnalytics(), content ? [] : listGames(), readSiteActivity(dates),
+  ]);
+  const comparisonRows = trafficDates(15, now).slice(0, 14).flatMap((date) => {
+    const row = snapshot?.days[date];
+    return row ? [row] : [];
+  });
+  const recent = comparisonRows.slice(7);
+  const hours = Array.from({ length: 24 }, (_, hour) => recent.reduce((sum, row) => sum + (row.hours[hour] ?? 0), 0));
+  const comparison = comparisonRows.length === 14 ? {
+    previous: comparisonRows.slice(0, 7).reduce((sum, row) => sum + row.pageViews, 0),
+    recent: recent.reduce((sum, row) => sum + row.pageViews, 0),
+    peakHour: hours.reduce((busiest, views, hour) => views > (hours[busiest] ?? 0) ? hour : busiest, -1),
+  } : undefined;
   const days = dates.map((date) => ({ date, row: snapshot?.days[date] }));
   const rows = days.flatMap(({ row }) => row ? [row] : []);
   const total = (key: "pageViews" | "requests" | "bytes" | "viewReports" | "serverErrors" | "clientErrors" | "botRequests" | "requestSeconds") =>
@@ -127,15 +171,23 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <div><h1><Icon name="trending" size={29} />站长统计</h1><p>{dates[0]}{!today && ` 至 ${dates.at(-1)}`} · 北京时间</p></div>
         <div className={styles.controls}>
           <nav aria-label="统计时间范围">{ranges.map(({ key, label }) =>
-            <Link key={key} href={`/admin/analytics?range=${key}&ranking=${selectedRanking}`} aria-current={period.key === key ? "page" : undefined}>{label}</Link>,
+            <Link key={key} href={`/admin/analytics?range=${key}${content ? "&tab=content" : `&ranking=${selectedRanking}`}`} aria-current={period.key === key ? "page" : undefined}>{label}</Link>,
           )}</nav>
-          {updated && <small>{stale ? "统计延迟 · " : ""}更新于 {updated}{today ? " · 今日数据未结束" : rows.length < days.length ? ` · ${days.length - rows.length} 天缺少记录` : ""}</small>}
+          {!content && updated && <small>{stale ? "统计延迟 · " : ""}更新于 {updated}{today ? " · 今日数据未结束" : rows.length < days.length ? ` · ${days.length - rows.length} 天缺少记录` : ""}</small>}
         </div>
       </header>
-      {!rows.length ? <section className={styles.detail}><h2>暂无统计数据</h2><p className={styles.empty}>{snapshot ? "这个日期范围内没有采集记录。" : "源站日志尚未生成统计快照。"}</p></section> : <>
+      <nav className={styles.sectionTabs} aria-label="站长统计视图">
+        <Link href={`/admin/analytics?range=${period.key}&ranking=${selectedRanking}`} aria-current={!content ? "page" : undefined}>流量总览</Link>
+        <Link href={`/admin/analytics?range=${period.key}&tab=content`} aria-current={content ? "page" : undefined}>内容表现</Link>
+      </nav>
+      {content ? <ContentPerformance activity={activity} days={days.length} /> : !rows.length ? <>
+        <OverviewDetails activity={activity} dayCount={days.length} comparison={comparison} />
+        <section className={styles.detail}><h2>暂无流量统计</h2><p className={styles.empty}>{snapshot ? "这个日期范围内没有采集记录。" : "源站日志尚未生成统计快照。"}</p></section>
+      </> : <>
         <div className={styles.summary}>{summary.map(({ title, value, note }) =>
           <div key={title}><span>{title}</span><strong>{value}</strong><small>{note}</small></div>,
         )}</div>
+        <OverviewDetails activity={activity} dayCount={days.length} comparison={comparison} />
         <TrafficChart key={period.key} points={points} hourly={today} />
         <div className={styles.detailsGrid}>
           <Ranking selected={selectedRanking} period={period.key} rows={rankedItems.slice(0, 10)} label={rankedName} total={views} />
@@ -167,7 +219,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           </div>
         </details>
         <details className={styles.method}><summary>统计口径</summary>
-          <p>数据来自 zbcyx.com 与 www.zbcyx.com 的 Nginx 回源日志。页面浏览按成功的浏览器请求估算，已排除可识别的爬虫和预取。源站日志无法可靠统计独立访客（UV）。Cloudflare 缓存命中、对象存储直出和外部网盘下载未计入。请求耗时为 Nginx 源站耗时。</p>
+          <p>页面浏览和请求耗时来自 Nginx 回源日志。浏览量已排除可识别的爬虫和预取，Cloudflare 缓存命中和对象存储直出未计入。独立访客从功能启用后以匿名浏览器 Cookie 去重，首次记录落在所选时段内为新访客，早于时段为回访。不同设备、浏览器或清除 Cookie 后会分别计数。</p>
         </details>
       </>}
     </div>

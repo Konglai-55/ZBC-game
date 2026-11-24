@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DownloadSource, Game } from "@/lib/types";
 import { Icon } from "@/components/icon";
+import { reportActivity } from "@/components/site-activity";
 import { mediaUrl } from "@/lib/media-url";
 
 function ProviderIcon({ id }: { id: DownloadSource["id"] }) {
@@ -10,7 +11,7 @@ function ProviderIcon({ id }: { id: DownloadSource["id"] }) {
   return <span className={`provider-icon provider-icon--${id}`}><img src={mediaUrl(`/brand/${logo}`)} alt="" aria-hidden="true" /></span>;
 }
 
-type DownloadPanelProps = { game: Game } | { title: string; updated: string; size: string; downloads: DownloadSource[] };
+type DownloadPanelProps = { game: Game } | { resourceId: string; title: string; updated: string; size: string; downloads: DownloadSource[] };
 
 export function DownloadPanel(props: DownloadPanelProps) {
   const details = "game" in props
@@ -45,6 +46,9 @@ export function DownloadPanel(props: DownloadPanelProps) {
     triggerButtonRef.current = trigger;
     setCopied(false);
     setSelected(source);
+    reportActivity("game" in props
+      ? { type: "download", kind: "game", id: props.game.slug, provider: source.id }
+      : { type: "download", kind: "resource", id: props.resourceId, provider: source.id });
   }
 
   function closeDownload() {
