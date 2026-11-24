@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { defaultGuides, defaultResources, defaultSiteSettings, games as defaultGames, resourceReferenceId } from "@/lib/data";
+import { defaultGuides, defaultResources, defaultSiteSettings, formatGameDate, games as defaultGames, resourceReferenceId } from "@/lib/data";
 import { defaultLegalDocuments } from "@/lib/legal-defaults";
 import { deleteObject, listObjects, objectPublicUrl, putObject } from "@/lib/object-storage";
 import type { FeedbackRecord, Game, GuideItem, LegalDocumentId, LegalDocumentItem, ResourceItem, SiteSettings, UploadRecord } from "@/lib/types";
@@ -22,6 +22,7 @@ type GameViewStats = Record<string, GameViewStat>;
 const emptyViewStats: GameViewStats = {};
 const viewDeduplicationWindow = 24 * 60 * 60 * 1000;
 const viewVisitorRetention = viewDeduplicationWindow;
+const gameBadgeDuration = 15 * 24 * 60 * 60 * 1000;
 
 async function readJson<T>(name: string, fallback: T): Promise<T> {
   try {
@@ -60,12 +61,25 @@ function effectiveViewTotal(stat?: GameViewStat) {
   return stat && Number.isSafeInteger(stat.total) && stat.total >= 0 ? stat.total : 0;
 }
 
+function effectiveGameBadge(game: Game, cutoff = formatGameDate(new Date(Date.now() - gameBadgeDuration))): Game["badge"] {
+  if (game.badge !== "新游" && game.badge !== "更新") return game.badge;
+  if (game.updated >= cutoff || !/^\d{4}-\d{2}-\d{2}$/.test(game.updated)) return game.badge;
+
+  const date = new Date(`${game.updated}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === game.updated ? "精选" : game.badge;
+}
+
 export async function listGames(): Promise<Game[]> {
   const [games, viewStats] = await Promise.all([
     readJson("games.json", defaultGames),
     readJson("view-stats.json", emptyViewStats),
   ]);
-  return games.map((game) => ({ ...game, views: effectiveViewTotal(viewStats[game.slug]) }));
+  const cutoff = formatGameDate(new Date(Date.now() - gameBadgeDuration));
+  return games.map((game) => ({
+    ...game,
+    badge: effectiveGameBadge(game, cutoff),
+    views: effectiveViewTotal(viewStats[game.slug]),
+  }));
 }
 
 export async function findGame(slug: string): Promise<Game | undefined> {
@@ -86,7 +100,7 @@ export async function createGame(game: Game): Promise<Game> {
     await verifyResourceIds(created.resourceIds);
     return [created, ...items];
   });
-  return created;
+  return { ...created, badge: effectiveGameBadge(created) };
 }
 
 export async function updateGame(originalSlug: string, game: Game): Promise<Game> {

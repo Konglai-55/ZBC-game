@@ -4,19 +4,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
-import { gameResourceGroups, platformMeta, resourceGroupLabels } from "@/lib/data";
+import { formatGameDate, gameResourceGroups, platformMeta, resourceGroupLabels } from "@/lib/data";
 import type { DownloadSource, Game, Platform, ResourceItem } from "@/lib/types";
 import { mediaUrl } from "@/lib/media-url";
 
 const downloadIds: DownloadSource["id"][] = ["quark", "baidu", "xunlei", "mobile"];
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function blankGame(platform: Platform = "pc"): Game {
   return {
-    slug: "", title: "", englishTitle: "", tagline: "", platform, category: "动作冒险", genre: "", size: "", updated: today(), badge: "新游", score: 8, views: 0, featured: false, cover: "", description: [],
+    slug: "", title: "", englishTitle: "", tagline: "", platform, category: "动作冒险", genre: "", size: "", updated: formatGameDate(), badge: "新游", score: 8, views: 0, featured: false, cover: "", description: [],
     requirements: { minimum: [], recommended: [] },
     downloads: [
       { id: "quark", name: "夸克网盘", url: "https://pan.quark.cn/", recommended: true },

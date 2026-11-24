@@ -1,5 +1,11 @@
 import type { Game, GuideItem, Platform, PlatformMeta, ResourceGroup, ResourceItem, SiteSettings } from "@/lib/types";
 
+const gameDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" });
+
+export function formatGameDate(date = new Date()) {
+  return gameDate.format(date);
+}
+
 const commonDownloads: Game["downloads"] = [
   {
     id: "quark",
