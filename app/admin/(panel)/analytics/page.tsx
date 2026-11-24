@@ -15,6 +15,11 @@ const ranges = [
   { key: "7", label: "近 7 天", days: 7 },
   { key: "14", label: "近 14 天", days: 14 },
 ] as const;
+const rankings = [
+  { key: "pages", label: "热门页面" },
+  { key: "games", label: "热门游戏" },
+  { key: "sources", label: "访问来源" },
+] as const;
 const headings = ["日期", "页面浏览", "源站请求", "阅读上报", "传输量", "4xx", "5xx", "平均耗时"];
 const sourceLabels: Record<string, string> = {
   "(none)": "无来源记录", "(internal)": "站内跳转", "(unknown)": "无法识别", "(other)": "其他",
@@ -41,21 +46,26 @@ function rank(rows: TrafficDay[], key: "pages" | "sources" | "statuses" | "devic
   return [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
-function Ranking({ title, rows, label, total }: {
-  title: string;
+function Ranking({ selected, period, rows, label, total }: {
+  selected: (typeof rankings)[number]["key"];
+  period: (typeof ranges)[number]["key"];
   rows: [string, number][];
   label: (key: string) => string;
   total: number;
 }) {
   return (
-    <section className={styles.detail}>
-      <header><h2>{title}</h2><small>次数 / 占比</small></header>
+    <section className={styles.detail} aria-labelledby="traffic-ranking">
+      <header><h2 id="traffic-ranking">流量排行</h2><small>按页面浏览量</small></header>
+      <nav className={styles.rankTabs} aria-label="流量排行类型">{rankings.map(({ key, label: text }) => (
+        <Link key={key} href={`/admin/analytics?range=${period}&ranking=${key}`} scroll={false} aria-current={key === selected ? "page" : undefined}>{text}</Link>
+      ))}</nav>
+      <div className={styles.rankHeader}><span>{rankings.find(({ key }) => key === selected)?.label}</span><span>次数</span><span>占比</span></div>
       {rows.length ? <ol className={styles.ranking}>
-        {rows.map(([key, count]) => {
+        {rows.map(([key, count], index) => {
           const percent = total ? 100 * count / total : 0;
           const name = label(key);
           return <li key={key}>
-            <div><span title={name}>{name}</span>{name !== key && key.startsWith("/") && <small>{key}</small>}</div>
+            <div><span className={styles.rankIndex} aria-hidden="true">{index + 1}</span><span className={styles.rankLabel} title={key}>{name}</span></div>
             <strong>{number.format(count)}</strong><small>{percent.toFixed(1)}%</small>
             <span className={styles.rankTrack} aria-hidden="true"><span style={{ width: `${percent}%` }} /></span>
           </li>;
@@ -65,10 +75,11 @@ function Ranking({ title, rows, label, total }: {
   );
 }
 
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ range?: string; ranking?: string }> }) {
   await requireAdminPage();
-  const { range } = await searchParams;
+  const { range, ranking } = await searchParams;
   const period = ranges.find(({ key }) => key === range) ?? ranges[1];
+  const selectedRanking = rankings.find(({ key }) => key === ranking)?.key ?? "pages";
   const [snapshot, games] = await Promise.all([readSiteAnalytics(), listGames()]);
   const today = period.key === "today";
   const now = new Date();
@@ -93,6 +104,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const gameNames = new Map(games.map((game) => [`/games/${game.slug}`, game.title]));
   const pages = rank(rows, "pages");
   const pageName = (path: string) => gameNames.get(path) ?? pathLabels[path] ?? path;
+  const rankedItems = selectedRanking === "sources" ? rank(rows, "sources")
+    : selectedRanking === "games" ? pages.filter(([url]) => url.startsWith("/games/")) : pages;
+  const rankedName = selectedRanking === "sources" ? (key: string) => sourceLabels[key] ?? key : pageName;
   const peak = points.reduce<(typeof points)[number] | undefined>(
     (highest, point) => !highest || point.pageViews > highest.pageViews ? point : highest, undefined,
   );
@@ -101,34 +115,30 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   }).format(new Date(snapshot.updatedAt)) : null;
   const stale = snapshot && now.getTime() - Date.parse(snapshot.updatedAt) > 35 * 60_000;
   const summary = [
-    { title: "页面浏览", value: number.format(views), note: peak?.pageViews ? `最高 ${peak.label} · ${number.format(peak.pageViews)} 次` : "已排除可识别爬虫和预取" },
+    { title: "页面浏览", value: number.format(views), note: peak?.pageViews ? `峰值 ${peak.label}，${number.format(peak.pageViews)} 次` : "当前范围" },
     { title: "源站请求", value: number.format(requests), note: `识别到爬虫 ${number.format(total("botRequests"))} 次` },
     { title: "传输量", value: transfer(total("bytes")), note: "源站响应正文" },
-    { title: "游戏阅读上报", value: number.format(total("viewReports")), note: "成功上报次数，含重复上报" },
-    { title: "独立访客（UV）", value: "—", note: "源站日志无法可靠去重" },
+    { title: "游戏阅读上报", value: number.format(total("viewReports")), note: "含重复上报" },
   ];
 
   return (
     <div className={`admin-page ${styles.analytics}`}>
       <header className={styles.pageHead}>
-        <div><h1><Icon name="trending" size={29} />站长统计</h1><p>页面浏览、来源与源站运行数据</p></div>
+        <div><h1><Icon name="trending" size={29} />站长统计</h1><p>{dates[0]}{!today && ` 至 ${dates.at(-1)}`} · 北京时间</p></div>
         <div className={styles.controls}>
           <nav aria-label="统计时间范围">{ranges.map(({ key, label }) =>
-            <Link key={key} href={`/admin/analytics?range=${key}`} aria-current={period.key === key ? "page" : undefined}>{label}</Link>,
+            <Link key={key} href={`/admin/analytics?range=${key}&ranking=${selectedRanking}`} aria-current={period.key === key ? "page" : undefined}>{label}</Link>,
           )}</nav>
-          <small>{dates[0]}{!today && ` 至 ${dates.at(-1)}`} · 北京时间</small>
+          {updated && <small>{stale ? "统计延迟 · " : ""}更新于 {updated}{today ? " · 今日数据未结束" : rows.length < days.length ? ` · ${days.length - rows.length} 天缺少记录` : ""}</small>}
         </div>
       </header>
       {!rows.length ? <section className={styles.detail}><h2>暂无统计数据</h2><p className={styles.empty}>{snapshot ? "这个日期范围内没有采集记录。" : "源站日志尚未生成统计快照。"}</p></section> : <>
         <div className={styles.summary}>{summary.map(({ title, value, note }) =>
           <div key={title}><span>{title}</span><strong>{value}</strong><small>{note}</small></div>,
         )}</div>
-        <p className={styles.timestamp}>{stale ? "统计延迟 · " : ""}数据更新于 {updated}{today ? " · 今天尚未结束" : rows.length < days.length ? ` · ${days.length - rows.length} 天缺少记录` : ""}</p>
         <TrafficChart key={period.key} points={points} hourly={today} />
         <div className={styles.detailsGrid}>
-          <Ranking title="热门页面" rows={pages.slice(0, 10)} label={pageName} total={views} />
-          <Ranking title="访问来源" rows={rank(rows, "sources").slice(0, 10)} label={(key) => sourceLabels[key] ?? key} total={views} />
-          <Ranking title="热门游戏" rows={pages.filter(([url]) => url.startsWith("/games/")).slice(0, 10)} label={pageName} total={views} />
+          <Ranking selected={selectedRanking} period={period.key} rows={rankedItems.slice(0, 10)} label={rankedName} total={views} />
           <div className={styles.stack}>
             <section className={styles.detail}>
               <header><h2>访问设备</h2><small>按浏览器标识估算</small></header>
@@ -137,15 +147,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             </section>
             <section className={styles.detail}>
               <header><h2>源站状态</h2><small>响应与错误</small></header>
-              <div className={styles.service}><span>平均请求耗时<strong>{averageLatency} ms</strong></span><span>4xx<strong>{number.format(total("clientErrors"))}</strong></span><span>5xx<strong>{number.format(total("serverErrors"))}</strong></span></div>
-              <div className={styles.codes}>{rank(rows, "statuses").slice(0, 7).map(([code, count]) =>
+              <div className={styles.service}><span>平均响应<strong>{averageLatency} ms</strong></span><span>请求错误 4xx<strong>{number.format(total("clientErrors"))}</strong></span><span>服务错误 5xx<strong>{number.format(total("serverErrors"))}</strong></span></div>
+              <details className={styles.method}><summary>查看状态码分布</summary><div className={styles.codes}>{rank(rows, "statuses").slice(0, 7).map(([code, count]) =>
                 <span key={code}><b>{code}</b> {number.format(count)}</span>,
-              )}</div>
+              )}</div></details>
             </section>
           </div>
         </div>
-        <section className={styles.detail}>
-          <header><h2>每日明细</h2><small>北京时间</small></header>
+        <details className={`${styles.detail} ${styles.daily}`}>
+          <summary><span>每日明细</span><small>{days.length} 天 · 北京时间</small><Icon name="chevron-down" size={18} /></summary>
           <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="每日统计明细">
             <table><thead><tr>{headings.map((label) => <th key={label} scope="col">{label}</th>)}</tr></thead>
               <tbody>{[...days].reverse().map(({ date, row }) => <tr key={date}>
@@ -155,9 +165,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               </tr>)}</tbody>
             </table>
           </div>
-        </section>
+        </details>
         <details className={styles.method}><summary>统计口径</summary>
-          <p>数据来自 zbcyx.com 与 www.zbcyx.com 的 Nginx 回源日志。页面浏览按成功的浏览器页面请求估算，已排除可识别的爬虫和 Next.js 预取请求。Cloudflare 缓存命中、对象存储直出和外部网盘下载未计入。请求耗时为 Nginx 源站耗时。</p>
+          <p>数据来自 zbcyx.com 与 www.zbcyx.com 的 Nginx 回源日志。页面浏览按成功的浏览器请求估算，已排除可识别的爬虫和预取。源站日志无法可靠统计独立访客（UV）。Cloudflare 缓存命中、对象存储直出和外部网盘下载未计入。请求耗时为 Nginx 源站耗时。</p>
         </details>
       </>}
     </div>
