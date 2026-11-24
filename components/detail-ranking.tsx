@@ -21,7 +21,7 @@ export function DetailRanking({ games }: { games: Game[] }) {
     if (mode === "month") return b.score - a.score || b.views - a.views || b.updated.localeCompare(a.updated);
     if (mode === "history") return b.views + b.score * 100 - (a.views + a.score * 100) || b.updated.localeCompare(a.updated);
     return b.views - a.views || b.score - a.score || b.updated.localeCompare(a.updated);
-  }).slice(0, 9), [games, mode]);
+  }).slice(0, 16), [games, mode]);
 
   return (
     <section className="detail-random detail-ranking" aria-labelledby="detail-ranking-title">
