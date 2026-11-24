@@ -520,7 +520,8 @@ h1, h2, h3, p { margin-top: 0; }
 .resource-row__icon { width: 46px; height: 46px; display: grid; place-items: center; overflow: hidden; color: var(--purple); background: var(--purple-soft); border-radius: 7px; }
 .resource-row__icon img { width: 100%; height: 100%; object-fit: cover; }
 .resource-row__type { width: max-content; max-width: 100%; padding: 5px 9px; color: var(--purple); background: var(--purple-soft); border-radius: 5px; font-size: 13px; font-weight: 700; }
-.resource-row strong { font-size: 15px; }
+.resource-row__title { font-size: 15px; overflow-wrap: anywhere; }
+.resource-row__title a:hover, .resource-row__title a:focus-visible { color: var(--purple); text-decoration: underline; text-underline-offset: .2em; }
 .resource-row small { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 12px; }
 .resource-row > a { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 40px; padding: 0 12px; color: var(--purple); background: #fff; border: 1px solid #cbbfff; border-radius: 4px; font-size: 12px; font-weight: 700; }
 .resource-row > a:hover { color: var(--purple-dark); border-color: var(--purple); background: #faf9ff; }

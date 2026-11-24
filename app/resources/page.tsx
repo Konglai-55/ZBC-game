@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "MOD、修改器与软件工具", des
 const resourceGroups = {
   mod: [
     { title: "MOD整合" },
-    { title: "修改器/存档" },
+    { title: "存档" },
   ],
   trainer: [{ title: "最新更新" }, { title: "游戏修改器" }],
   save: [{ title: "最新更新" }, { title: "游戏存档" }],
@@ -26,7 +26,7 @@ const resourceGroups = {
 
 const resourceCategoryAliases: Record<string, string[]> = {
   "MOD整合": ["MOD整合", "MOD 整合"],
-  "修改器/存档": ["修改器/存档", "修改器 / 存档"],
+  "存档": ["存档", "修改器/存档", "修改器 / 存档"],
 };
 
 function matchesResourceCategory(category: string, requested: string) {
@@ -44,12 +44,13 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
   const canonicalRequestedCategory = requestedCategory ? canonicalResourceCategory(requestedCategory) : undefined;
   const defaultCategory = active === "mod" ? "MOD整合" : "最新更新";
   const activeCategory = canonicalRequestedCategory && resourceGroups[active].some((group) => group.title === canonicalRequestedCategory) ? canonicalRequestedCategory : defaultCategory;
-  const hotCategoryOrder = ["修改软件", "工具软件", "系统软件", "MOD整合", "修改器/存档"];
+  const showSavesInMod = active === "mod" && activeCategory === "存档";
+  const hotCategoryOrder = ["修改软件", "工具软件", "系统软件", "MOD整合", "存档"];
   const query = q.trim().toLowerCase();
-  const allManagedResources = (await listResources()).filter((item) => item.group === active && item.published);
+  const allManagedResources = (await listResources()).filter((item) => item.published && (item.group === active || (showSavesInMod && item.group === "save")));
   const managedResources = allManagedResources.filter((item) => {
     const matchesQuery = !query || [item.name, item.category, item.description, item.version].join(" ").toLowerCase().includes(query);
-    return matchesQuery && (activeCategory === "最新更新" || matchesResourceCategory(item.category, activeCategory));
+    return matchesQuery && (activeCategory === "最新更新" || (showSavesInMod && (item.group === "save" || item.category === "游戏存档")) || matchesResourceCategory(item.category, activeCategory));
   }).sort((a, b) => {
     if (sort === "hot") return (hotCategoryOrder.indexOf(canonicalResourceCategory(a.category)) - hotCategoryOrder.indexOf(canonicalResourceCategory(b.category))) || b.updated.localeCompare(a.updated);
     return b.updated.localeCompare(a.updated);
@@ -85,9 +86,9 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
           <div className="resource-list__head"><div><span className="eyebrow"><Icon name="refresh" size={15} />持续维护</span><h2>{listHeading}</h2></div><SortToggle active={sort} hotHref={`${categoryHref(activeCategory)}&sort=hot`} latestHref={`${categoryHref(activeCategory)}&sort=latest`} /></div>
           {managedResources.length > 0 ? managedResources.map((item) => (
             <article className="resource-row" key={item.id}>
-              <span className="resource-row__type">{item.category}</span>
+              <span className="resource-row__type">{showSavesInMod ? "存档" : item.category}</span>
               <span className="resource-row__icon">{item.iconUrl ? <img src={mediaUrl(item.iconUrl)} alt="" /> : <Icon name={item.group === "mod" ? "sparkles" : "wrench"} size={24} />}</span>
-              <strong>{item.name}</strong>
+              <strong className="resource-row__title"><Link href={`/resources/${item.id}`}>{item.name}</Link></strong>
               <small><Icon name="hard-drive" size={14} />{item.size}</small>
               <small><Icon name="calendar" size={14} />{item.updated}</small>
               <Link href={`/resources/${item.id}`}>查看详情 <Icon name="arrow-right" size={15} /></Link>
