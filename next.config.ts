@@ -9,7 +9,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://gameimg.cn-nb1.rains3.com",
+  "img-src 'self' data: blob: https://gameimg.cn-nb1.rains3.com https://cn-nb1.rains3.com",
   "font-src 'self' data:",
   `connect-src 'self'${development ? " ws: wss:" : ""}`,
 ].join("; ");

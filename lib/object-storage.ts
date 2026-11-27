@@ -1,7 +1,7 @@
 import "server-only";
 
-import { DeleteObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { publicMediaUrl } from "@/lib/media-url";
+import { GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { objectStorageSourceConfig } from "@/lib/object-storage-config";
 
 let client: S3Client | undefined;
@@ -26,7 +26,13 @@ function encodeObjectKey(key: string) {
 }
 
 export function objectPublicUrl(key: string) {
-  return `${publicMediaUrl}/${encodeObjectKey(key.replace(/^\/+/, ""))}`;
+  return `/media/${encodeObjectKey(key.replace(/^\/+/, ""))}`;
+}
+
+export async function signedImageUrl(key: string) {
+  return getSignedUrl(storageClient(), new GetObjectCommand({
+    Bucket: objectStorageSourceConfig.bucket, Key: key,
+  }), { expiresIn: 600 });
 }
 
 export async function putObject(key: string, body: Uint8Array, contentType: string) {

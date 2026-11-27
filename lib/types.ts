@@ -25,6 +25,10 @@ export type Game = {
   platform: Platform;
   category: string;
   genre: string;
+  series?: string;
+  updatedAt?: string;
+  downloadCount?: number;
+  communityId?: string;
   size: string;
   updated: string;
   badge: GameBadge;
@@ -56,6 +60,7 @@ export type ResourceItem = {
   version: string;
   size: string;
   updated: string;
+  updatedAt?: string;
   fileUrl?: string;
   externalUrl?: string;
   downloads?: DownloadSource[];
@@ -72,6 +77,7 @@ export type GuideItem = {
   summary: string;
   content: string;
   updated: string;
+  updatedAt?: string;
   published: boolean;
 };
 
@@ -80,8 +86,11 @@ export type FeedbackRecord = {
   gameSlug: string;
   type: "update" | "broken";
   createdAt: string;
-  status: "pending" | "resolved";
+  status: "pending" | "processing" | "resolved";
   note?: string;
+  message?: string;
+  screenshot?: string;
+  fingerprint?: string;
 };
 
 export type SiteSettings = {
@@ -109,6 +118,7 @@ export type UploadRecord = {
   url: string;
   size: number;
   updatedAt: string;
+  referenced?: boolean;
   kind: "image" | "archive" | "document";
 };
 

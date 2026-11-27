@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { GameCard, RankedGame } from "@/components/game-card";
 import { Icon } from "@/components/icon";
-import type { Game } from "@/lib/types";
+import type { GameSummary as Game } from "@/lib/catalog";
 
 type SortMode = "latest" | "hot";
 

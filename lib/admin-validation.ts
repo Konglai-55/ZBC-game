@@ -48,7 +48,7 @@ function email(value: unknown, label: string) {
 function url(value: unknown, label: string, required = false) {
   const result = text(value, label, { required, max: 2000 });
   if (!result) return "";
-  if (result.startsWith("/uploads/") || result.startsWith("/covers/")) return result;
+  if (result.startsWith("/media/uploads/") || result.startsWith("/uploads/") || result.startsWith("/covers/")) return result;
   try {
     const parsed = new URL(result);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
@@ -110,6 +110,7 @@ export function parseGame(value: unknown): Game {
     tagline: text(body.tagline, "一句话介绍", { required: true, max: 220 }),
     platform,
     category: text(body.category, "分类", { required: true, max: 40 }),
+    series: text(body.series, "系列", { max: 80 }),
     genre: text(body.genre, "类型", { required: true, max: 60 }),
     size: text(body.size, "文件大小", { required: true, max: 30 }),
     updated: date(body.updated, "更新时间"),
@@ -167,7 +168,7 @@ export function parseGuide(value: unknown): GuideItem {
 export function parseFeedbackPatch(value: unknown): Pick<FeedbackRecord, "status" | "note"> {
   const body = object(value);
   const status = text(body.status, "处理状态") as FeedbackRecord["status"];
-  if (status !== "pending" && status !== "resolved") throw new Error("处理状态无效");
+  if (status !== "pending" && status !== "processing" && status !== "resolved") throw new Error("处理状态无效");
   return { status, note: text(body.note, "处理备注", { max: 1000 }) || undefined };
 }
 

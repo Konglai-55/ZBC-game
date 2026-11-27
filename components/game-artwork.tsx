@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { Game } from "@/lib/types";
+import type { GameSummary as Game } from "@/lib/catalog";
 import { mediaUrl } from "@/lib/media-url";
 
 type GameArtworkProps = {

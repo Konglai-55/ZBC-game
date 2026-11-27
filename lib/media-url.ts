@@ -5,13 +5,13 @@ export const publicMediaUrl = fallbackPublicMediaUrl;
 
 export function mediaUrl(source: string) {
   if (!source) return source;
-  if (/^https?:\/\//i.test(source) || source.startsWith("data:") || source.startsWith("blob:")) return source;
-  const pathname = source.startsWith("/") ? source : `/${source}`;
-  return `${publicMediaUrl}${pathname}`;
+  if (source.startsWith(publicMediaUrl + "/")) return "/media/" + source.slice(publicMediaUrl.length + 1);
+  if (source.startsWith("/uploads/") && /\.(?:png|jpe?g|webp|gif|svg)$/i.test(source)) return "/media" + source;
+  return source;
 }
 
 export function isManagedMediaUrl(value: string) {
-  if (value.startsWith("/uploads/") || value.startsWith("/covers/") || value.startsWith("/brand/")) return true;
+  if (value.startsWith("/media/uploads/") || value.startsWith("/uploads/") || value.startsWith("/covers/") || value.startsWith("/brand/")) return true;
   try {
     return new URL(value).origin === new URL(publicMediaUrl).origin;
   } catch {

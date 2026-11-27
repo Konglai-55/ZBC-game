@@ -1,11 +1,12 @@
 "use client";
 
+import { rankingScore } from "@/lib/catalog";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { GameArtwork } from "@/components/game-artwork";
 import { Icon } from "@/components/icon";
 import { getPlatform } from "@/lib/data";
-import type { Game } from "@/lib/types";
+import type { GameSummary as Game } from "@/lib/catalog";
 
 type RankingMode = "week" | "month" | "history";
 
@@ -17,11 +18,7 @@ const tabs: Array<{ key: RankingMode; label: string }> = [
 
 export function DetailRanking({ games }: { games: Game[] }) {
   const [mode, setMode] = useState<RankingMode>("week");
-  const ranked = useMemo(() => [...games].sort((a, b) => {
-    if (mode === "month") return b.score - a.score || b.views - a.views || b.updated.localeCompare(a.updated);
-    if (mode === "history") return b.views + b.score * 100 - (a.views + a.score * 100) || b.updated.localeCompare(a.updated);
-    return b.views - a.views || b.score - a.score || b.updated.localeCompare(a.updated);
-  }).slice(0, 16), [games, mode]);
+  const ranked = useMemo(() => [...games].sort((a,b) => rankingScore(mode,a,b)).slice(0, 16), [games, mode]);
 
   return (
     <section className="detail-random detail-ranking" aria-labelledby="detail-ranking-title">
@@ -30,7 +27,7 @@ export function DetailRanking({ games }: { games: Game[] }) {
       </div>
       <div className="detail-ranking__list">
         {ranked.map((item, index) => (
-          <Link href={`/games/${item.slug}`} key={item.slug} target="_blank" rel="noopener noreferrer">
+          <Link href={`/games/${item.slug}`} key={item.slug} prefetch={false} target="_blank" rel="noopener noreferrer">
             <span className={`detail-ranking__rank rank-${index + 1}`}>{String(index + 1).padStart(2, "0")}</span>
             <GameArtwork game={item} variant="compact" />
             <span className="detail-ranking__copy"><strong>{item.title}<em>{item.badge}</em></strong><small><Icon name="star" size={12} />{item.score} · {item.size} · {getPlatform(item.platform)?.shortLabel} · {item.genre}</small></span>

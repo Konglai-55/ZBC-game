@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { activityDate, downloadProviders, normalizeSearchTerm, type ActivityEvent } from "@/lib/activity-events";
+import { countDownload } from "@/lib/content-store";
 import { appendSiteActivity } from "@/lib/site-activity-store";
 import { checkRateLimit, clientAddress, isSameOriginRequest, rateLimitResponse, readJsonBody, RequestBodyError } from "@/lib/request-security";
 
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
   const today = activityDate.format(new Date());
   const existing = parseVisitor(request.cookies.get(cookie)?.value, secret, today);
   const visitor = existing ?? { id: randomUUID().replaceAll("-", ""), firstDay: today };
+  if (event.type === "download" && event.kind === "game") await countDownload(event.id, event.provider, signature(visitor.id,secret));
   await appendSiteActivity(today, event.type === "visit" ? {
     type: "visit", visitor: signature(visitor.id, secret), firstDay: visitor.firstDay,
   } : event);

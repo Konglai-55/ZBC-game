@@ -1,3 +1,4 @@
+import { relativeDate } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GamePagination } from "@/components/game-pagination";
@@ -107,7 +108,7 @@ export default async function ResourcesPage({ searchParams }: {
               <span className="resource-row__icon">{item.iconUrl ? <img src={mediaUrl(item.iconUrl)} alt="" /> : <Icon name={item.group === "mod" ? "sparkles" : "wrench"} size={24} />}</span>
               <strong className="resource-row__title"><Link href={`/resources/${item.id}`}>{item.name}</Link></strong>
               <small><Icon name="hard-drive" size={14} />{item.size}</small>
-              <small><Icon name="calendar" size={14} />{item.updated}</small>
+              <small><Icon name="calendar" size={14} />{relativeDate(item.updated,item.updatedAt)}</small>
               <Link href={`/resources/${item.id}`}>查看详情 <Icon name="arrow-right" size={15} /></Link>
             </article>
           )) : <div className="empty-state"><Icon name="wrench" size={28} /><h3>暂时没有已发布资源</h3><p>管理员可以在后台上传 MOD、修改器、软件工具或补丁。</p></div>}

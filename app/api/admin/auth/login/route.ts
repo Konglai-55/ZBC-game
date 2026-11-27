@@ -1,3 +1,4 @@
+import { checkLogin } from "@/lib/content-store";
 import { adminAuthConfigured, createAdminSession, verifyAdminCredentials } from "@/lib/admin-auth";
 import { checkRateLimit, clientAddress, isSameOriginRequest, rateLimitResponse, readJsonBody, RequestBodyError } from "@/lib/request-security";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   if (!(await adminAuthConfigured())) {
     return Response.json({ error: "生产环境尚未配置管理员账号，请设置 ADMIN_USERNAME、ADMIN_PASSWORD 和 ADMIN_SESSION_SECRET。" }, { status: 503 });
   }
-  let body: { username?: unknown; password?: unknown };
+  let body: { username?: unknown; password?: unknown; code?: string };
   try {
     body = await readJsonBody(request, 8 * 1024);
   } catch (error) {
@@ -18,8 +19,8 @@ export async function POST(request: Request) {
   }
   const username = typeof body.username === "string" ? body.username.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
-  if (!verifyAdminCredentials(username, password)) {
-    return Response.json({ error: "账号或密码错误" }, { status: 401 });
+  if (!await checkLogin(username, verifyAdminCredentials(username, password), typeof body.code === "string" ? body.code : "")) {
+    return Response.json({ error: "验证失败或账号暂时锁定，请核对凭据或稍后再试" }, { status: 401 });
   }
   await createAdminSession(username);
   return Response.json({ data: { username, role: "admin" } });

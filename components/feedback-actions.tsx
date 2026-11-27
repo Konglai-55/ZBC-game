@@ -1,39 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import { Icon } from "@/components/icon";
-
-type FeedbackType = "update" | "broken";
+import { useEffect, useState } from "react";
 
 export function FeedbackActions({ gameSlug }: { gameSlug: string }) {
-  const [status, setStatus] = useState<FeedbackType | "idle" | "error">("idle");
-  const [loading, setLoading] = useState<FeedbackType | null>(null);
-
-  async function submit(type: FeedbackType) {
-    setLoading(type);
+  const [type, setType] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const receipt = localStorage.getItem("feedback:" + gameSlug);
+    if (!receipt) return;
+    const abort = new AbortController();
+    fetch("/api/feedback/" + encodeURIComponent(receipt), { signal: abort.signal }).then(async response => {
+      if (!response.ok) return;
+      const { status, note } = await response.json();
+      const label = status === "resolved" ? "已修复" : status === "processing" ? "处理中" : "待处理";
+      setNotice(`上次反馈：${label}${note ? " · " + note : ""}`);
+    }).catch(() => {});
+    return () => abort.abort();
+  }, [gameSlug]);
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setBusy(true);
     try {
-      const response = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameSlug, type }),
-      });
-      if (!response.ok) throw new Error("Request failed");
-      setStatus(type);
-    } catch {
-      setStatus("error");
-    } finally {
-      setLoading(null);
-    }
+      const file = data.get("picture");
+      let screenshot = "";
+      if (file instanceof File && file.size) {
+        if (file.size > 512 * 1024) throw new Error("截图最大 512 KB");
+        screenshot = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error("无法读取截图"));
+          reader.readAsDataURL(file);
+        });
+      }
+      const response = await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameSlug, type, message: data.get("message"), screenshot }) });
+      if (!response.ok) throw new Error((await response.json()).error);
+      const { data: receipt } = await response.json();
+      localStorage.setItem("feedback:" + gameSlug, receipt.id);
+      setType(""); setNotice("已收到反馈。");
+    } catch (error) { setNotice((error as Error).message); }
+    finally { setBusy(false); }
   }
-
-  return (
-    <div className="feedback-box">
-      <div><span>资源状态反馈</span><p>发现版本过旧或链接异常？一键告诉我们。</p></div>
-      <div className="feedback-actions">
-        <button disabled={Boolean(loading)} type="button" onClick={() => submit("update")}><Icon name="refresh" size={17} />{loading === "update" ? "提交中…" : "游戏催更"}</button>
-        <button className="is-warning" disabled={Boolean(loading)} type="button" onClick={() => submit("broken")}><Icon name="warning" size={17} />{loading === "broken" ? "提交中…" : "资源报错"}</button>
-      </div>
-      {status !== "idle" && <p className={`feedback-status ${status === "error" ? "is-error" : ""}`} role="status">{status === "error" ? "提交失败，请稍后重试。" : "已收到，感谢你的反馈。"}</p>}
-    </div>
-  );
+  return <section className="feedback-box"><div><strong>资源状态反馈</strong></div>
+    <div className="feedback-actions">{[["update","游戏催更"],["broken","资源报错"]].map(([value,label]) =>
+      <button key={value} disabled={busy} aria-pressed={type === value} onClick={() => { setType(value); setNotice(""); }}>{label}</button>)}</div>
+    {type && <form className="discussion-form" onSubmit={submit}><label>问题说明<textarea name="message" maxLength={1200} rows={3} /></label>
+      <label>附上截图（选填，最大 512 KB）<input name="picture" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+      <button className="button button--primary" disabled={busy}>{busy ? "提交中…" : "提交反馈"}</button></form>}
+    <p role="status">{notice}</p></section>;
 }

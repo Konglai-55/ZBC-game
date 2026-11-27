@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isSameOriginRequest } from "@/lib/request-security";
@@ -12,7 +14,16 @@ type SessionPayload = {
   username: string;
   role: "admin";
   expiresAt: number;
+  secondFactor?: boolean;
 };
+
+export async function factorSecret() {
+  if (process.env.ADMIN_TOTP_SECRET) return process.env.ADMIN_TOTP_SECRET;
+  try {
+    const stored = JSON.parse(await readFile(path.join(process.env.ZBC_DATA_DIR || path.join(process.cwd(),"data"),"admin-factor.json"),"utf8"));
+    return String(stored.secret || "");
+  } catch(error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return ""; throw error; }
+}
 
 function sessionSecret() {
   return process.env.ADMIN_SESSION_SECRET || "";
@@ -36,19 +47,19 @@ function safeEqual(left: string, right: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function createToken(username: string) {
-  const payload: SessionPayload = { username, role: "admin", expiresAt: Date.now() + SESSION_SECONDS * 1000 };
+async function createToken(username: string) {
+  const payload: SessionPayload = { username, role: "admin", secondFactor: Boolean(await factorSecret()), expiresAt: Date.now() + SESSION_SECONDS * 1000 };
   const encoded = encode(JSON.stringify(payload));
   return `${encoded}.${sign(encoded)}`;
 }
 
-function verifyToken(token?: string): SessionPayload | null {
+async function verifyToken(token?: string): Promise<SessionPayload | null> {
   if (!token || !sessionSecret()) return null;
   const [encoded, signature, extra] = token.split(".");
   if (!encoded || !signature || extra || !safeEqual(signature, sign(encoded))) return null;
   try {
     const payload = JSON.parse(decode(encoded)) as SessionPayload;
-    if (payload.role !== "admin" || !payload.username || payload.expiresAt <= Date.now()) return null;
+    if ((await factorSecret() && !payload.secondFactor) || payload.role !== "admin" || !payload.username || payload.expiresAt <= Date.now()) return null;
     return payload;
   } catch {
     return null;
@@ -71,7 +82,7 @@ export function verifyAdminCredentials(username: string, password: string) {
 
 export async function createAdminSession(username: string) {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, createToken(username), {
+  cookieStore.set(COOKIE_NAME, await createToken(username), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",

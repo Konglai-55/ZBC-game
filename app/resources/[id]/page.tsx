@@ -28,7 +28,7 @@ export default async function ResourceDetailPage({ params }: ResourceDetailProps
   const resource = await findResource(id);
   if (!resource || !resource.published) notFound();
 
-  const downloadUrl = resource.fileUrl || resource.externalUrl;
+  const downloadUrl = (resource.fileUrl && /\.(png|jpe?g|webp|gif)$/i.test(resource.fileUrl) ? mediaUrl(resource.fileUrl) : resource.fileUrl) || resource.externalUrl;
   const isExternal = Boolean(resource.externalUrl && !resource.fileUrl);
   const hasCloudDownloads = resource.downloads?.some((source) => source.qrCode);
   const content = resource.content?.length ? resource.content : [resource.description];

@@ -1,3 +1,4 @@
+import { discoveryPage } from "@/lib/catalog";
 import { listGames } from "@/lib/content-store";
 
 export async function GET(request: Request) {
@@ -5,6 +6,7 @@ export async function GET(request: Request) {
   const query = searchParams.get("q") ?? "";
   const platform = searchParams.get("platform");
   const games = await listGames();
+  if (searchParams.has("discovery")) return Response.json(discoveryPage(games,platform || "pc",searchParams.get("sort") || "latest",Number(searchParams.get("page"))), { headers: { "Cache-Control": "public, max-age=30" } });
   const normalized = query.trim().toLowerCase();
   const matches = !normalized ? games : games.filter((game) => [game.title, game.englishTitle, game.category, game.genre, game.tagline].join(" ").toLowerCase().includes(normalized));
   const results = matches.filter((game) => !platform || game.platform === platform);

@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { BrandLogo } from "@/components/brand-logo";
 import { Icon } from "@/components/icon";
-import { getAdminSession } from "@/lib/admin-auth";
+import { factorSecret, getAdminSession } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "后台登录" };
 
 export default async function AdminLoginPage() {
   if (await getAdminSession()) redirect("/admin");
-  return <main className="admin-login-page"><section className="admin-login-card"><div className="admin-login-brand"><BrandLogo priority variant="login" /></div><div className="admin-login-copy"><span><Icon name="shield" size={16} />管理员安全入口</span><h1>管理全部站点内容</h1><p>维护游戏、下载线路、附件、软件工具、教程和用户反馈。</p></div><AdminLoginForm /></section></main>;
+  return <main className="admin-login-page"><section className="admin-login-card"><div className="admin-login-brand"><BrandLogo priority variant="login" /></div><div className="admin-login-copy"><span><Icon name="shield" size={16} />管理员安全入口</span><h1>管理全部站点内容</h1><p>维护游戏、下载线路、附件、软件工具、教程和用户反馈。</p></div><AdminLoginForm secondFactor={Boolean(await factorSecret())} /></section></main>;
 }

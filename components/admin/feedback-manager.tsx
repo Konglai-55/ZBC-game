@@ -1,14 +1,54 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Icon } from "@/components/icon";
 import type { FeedbackRecord, Game } from "@/lib/types";
 
-export function FeedbackManager({ initialFeedback, games }: { initialFeedback: FeedbackRecord[]; games: Game[] }) {
-  const router = useRouter(); const [items, setItems] = useState(initialFeedback); const [filter, setFilter] = useState<"all" | "pending" | "resolved">("all"); const [notice, setNotice] = useState("");
-  const visible = items.filter((item) => filter === "all" || item.status === filter);
-  async function update(item: FeedbackRecord, status: FeedbackRecord["status"]) { const response = await fetch(`/api/admin/feedback/${encodeURIComponent(item.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, note: item.note || "" }) }); const result = await response.json() as { data?: FeedbackRecord; error?: string }; if (response.ok && result.data) { setItems((current) => current.map((entry) => entry.id === item.id ? result.data! : entry)); setNotice(status === "resolved" ? "反馈已标记为已处理" : "反馈已重新打开"); router.refresh(); } else setNotice(result.error || "更新失败"); }
-  async function remove(item: FeedbackRecord) { if (!window.confirm("删除这条反馈记录吗？")) return; const response = await fetch(`/api/admin/feedback/${encodeURIComponent(item.id)}`, { method: "DELETE" }); if (response.ok) { setItems((current) => current.filter((entry) => entry.id !== item.id)); setNotice("反馈已删除"); router.refresh(); } }
-  return <><div className="admin-toolbar"><div className="admin-segmented"><button className={filter === "all" ? "is-active" : ""} type="button" onClick={() => setFilter("all")}>全部 {items.length}</button><button className={filter === "pending" ? "is-active" : ""} type="button" onClick={() => setFilter("pending")}>待处理 {items.filter((item) => item.status === "pending").length}</button><button className={filter === "resolved" ? "is-active" : ""} type="button" onClick={() => setFilter("resolved")}>已处理</button></div></div>{notice && <p className="admin-form-message is-success" role="status">{notice}</p>}<div className="admin-table-wrap"><table className="admin-table admin-table--feedback"><thead><tr><th>反馈</th><th>关联游戏</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead><tbody>{visible.map((item) => { const game = games.find((entry) => entry.slug === item.gameSlug); return <tr key={item.id}><td><span className={`admin-feedback-type ${item.type === "broken" ? "is-warning" : ""}`}><Icon name={item.type === "broken" ? "warning" : "refresh"} size={15} />{item.type === "broken" ? "资源报错" : "游戏催更"}</span>{item.note && <small>{item.note}</small>}</td><td><strong>{game?.title || item.gameSlug}</strong><small>{item.gameSlug}</small></td><td>{new Date(item.createdAt).toLocaleString("zh-CN")}</td><td><span className={`admin-status ${item.status === "resolved" ? "is-resolved" : "is-pending"}`}>{item.status === "resolved" ? "已处理" : "待处理"}</span></td><td><div className="admin-row-actions">{item.status === "pending" ? <button type="button" onClick={() => update(item, "resolved")}>标记完成</button> : <button type="button" onClick={() => update(item, "pending")}>重新打开</button>}<button className="is-danger" type="button" onClick={() => remove(item)}>删除</button></div></td></tr>; })}</tbody></table>{visible.length === 0 && <div className="admin-empty">暂无反馈记录。</div>}</div></>;
+const states = { pending: "待处理", processing: "处理中", resolved: "已修复" } as const;
+const dates = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" });
+export function FeedbackManager({ initialFeedback, games }: { initialFeedback: FeedbackRecord[]; games: Pick<Game, "slug" | "title">[] }) {
+  const [items, setItems] = useState(initialFeedback);
+  const [status, setStatus] = useState("");
+  const [type, setType] = useState("");
+  const [date, setDate] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [next, setNext] = useState<FeedbackRecord["status"]>("processing");
+  const [note, setNote] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const visible = items.filter(item => (!status || item.status === status) && (!type || item.type === type)
+    && (!date || dates.format(new Date(item.createdAt)) === date));
+  const ids = visible.filter(item => selected.includes(item.id)).map(item => item.id);
+  const options = Object.entries(states).map(([key,label]) => <option key={key} value={key}>{label}</option>);
+  async function save() {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/feedback", { method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, status: next, note }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      const updated = new Map<string, FeedbackRecord>(result.data.map((item: FeedbackRecord) => [item.id,item]));
+      setItems(all => all.map(item => updated.get(item.id) ?? item));
+      setSelected([]); setNote(""); setNotice(`已更新 ${ids.length} 条反馈`);
+    } catch (error) { setNotice((error as Error).message); } finally { setBusy(false); }
+  }
+  async function remove(item: FeedbackRecord) {
+    if (!confirm("将这条反馈移入回收站？")) return;
+    try {
+      const response = await fetch(`/api/admin/feedback/${item.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("删除失败");
+      setItems(all => all.filter(old => old.id !== item.id));
+    } catch(error) { setNotice((error as Error).message); }
+  }
+  return <><div className="admin-toolbar"><select aria-label="处理状态" value={status} onChange={e => setStatus(e.target.value)}><option value="">全部状态</option>{options}</select>
+    <select aria-label="反馈类型" value={type} onChange={e => setType(e.target.value)}><option value="">全部类型</option><option value="update">催更</option><option value="broken">报错</option></select>
+    <label>提交日期 <input type="date" value={date} onChange={e => setDate(e.target.value)} /></label></div>
+    <div className="admin-toolbar"><select aria-label="标记为" value={next} onChange={e => setNext(e.target.value as FeedbackRecord["status"])}>{options}</select>
+    <input aria-label="处理说明" maxLength={1000} placeholder="处理说明（留空保留原说明）" value={note} onChange={e => setNote(e.target.value)} />
+    <button className="admin-primary-button" disabled={busy || !ids.length || ids.length > 200} onClick={save}>更新选中项（{ids.length}）</button></div>
+    <p role="status">{notice}</p><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th><input aria-label="选择当前筛选结果，最多200条" type="checkbox" checked={!!ids.length && ids.length === Math.min(visible.length,200)} onChange={e => setSelected(e.target.checked ? visible.slice(0,200).map(item => item.id) : [])} /></th><th>游戏 / 类型</th><th>用户反馈</th><th>提交日期</th><th>处理状态 / 说明</th><th>操作</th></tr></thead>
+    <tbody>{visible.map(item => <tr key={item.id}><td><input aria-label="选择反馈" type="checkbox" checked={selected.includes(item.id)} onChange={e => setSelected(e.target.checked ? [...selected,item.id] : selected.filter(id => id !== item.id))} /></td>
+    <td>{games.find(game => game.slug === item.gameSlug)?.title ?? item.gameSlug}<small>{item.type === "broken" ? "报错" : "催更"}</small></td>
+    <td>{item.message || "未填写文字"}{item.screenshot && <a href={item.screenshot} target="_blank" rel="noreferrer"><img loading="lazy" src={item.screenshot} alt="用户反馈截图" width={96} /></a>}</td>
+    <td>{dates.format(new Date(item.createdAt))}</td><td>{states[item.status]}<small>{item.note}</small></td><td><button onClick={() => remove(item)}>移入回收站</button></td></tr>)}</tbody></table>
+    {!visible.length && <p className="admin-empty">没有符合筛选条件的反馈。</p>}</div></>;
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { GameArtwork } from "@/components/game-artwork";
 import { Icon } from "@/components/icon";
 import { formatViews } from "@/lib/data";
-import type { Game } from "@/lib/types";
+import type { GameSummary as Game } from "@/lib/catalog";
 
 export function FeaturedGameCarousel({ games }: { games: Game[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -46,7 +46,7 @@ export function FeaturedGameCarousel({ games }: { games: Game[] }) {
             <span><Icon name="eye" size={16} />{formatViews(activeGame.views)}</span>
             <span><Icon name="hard-drive" size={16} />{activeGame.size}</span>
           </div>
-          <Link className="featured-showcase__cta" href={`/games/${activeGame.slug}`} target="_blank" rel="noopener noreferrer">查看游戏详情 <Icon name="arrow-right" size={18} /></Link>
+          <Link className="featured-showcase__cta" href={`/games/${activeGame.slug}`} prefetch={false} target="_blank" rel="noopener noreferrer">查看游戏详情 <Icon name="arrow-right" size={18} /></Link>
         </div>
       </article>
 

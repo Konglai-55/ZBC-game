@@ -1,3 +1,4 @@
+import { discoveryPage, summary, updatePeriods, weeklySelection } from "@/lib/catalog";
 import Link from "next/link";
 import { GameCard } from "@/components/game-card";
 import { DiscoverySwitcher } from "@/components/discovery-switcher";
@@ -16,6 +17,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || b.views - a.views || b.score - a.score)
     .slice(0, 3);
   const toolResources = resources.filter((resource) => resource.group === "tools" && resource.published).sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 6);
+
+  const periods = updatePeriods();
 
   return (
     <>
@@ -42,14 +45,21 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <span><Icon name="zap" size={16} />多种网盘线路</span>
             </div>
           </div>
-          <FeaturedGameCarousel games={featuredGames} />
+          <FeaturedGameCarousel games={featuredGames.map(summary)} />
         </div>
         <div className="shell discovery-section">
-          <DiscoverySwitcher games={games} />
+          <DiscoverySwitcher initial={discoveryPage(games,"pc","latest",1)} />
         </div>
       </section>
 
-      <HomeWeeklyPicks games={games} initialSort={sort} />
+      <section className="section shell"><h2>游戏更新量</h2>
+        <div className="update-counts">{platformMeta.map(platform => {
+          const dates = games.filter(game => game.platform === platform.key && game.updated <= periods.today);
+          return <div key={platform.key}><strong>{platform.key === "mobile" ? "安卓 / 手机" : platform.shortLabel}</strong>
+            <span>本周 {dates.filter(game => game.updated >= periods.week).length} 款</span>
+            <span>本月 {dates.filter(game => game.updated >= periods.month).length} 款</span></div>;
+        })}</div></section>
+      <HomeWeeklyPicks games={weeklySelection(games)} initialSort={sort} />
 
       <section className="section shell">
         <SectionHeading eyebrow="按平台浏览" title="主机与移动游戏" description="按设备查看最近更新和热门资源。" icon="gamepad" />

@@ -6,3 +6,12 @@
 /data/site-activity/
 .env.local
 .env.*.local
+
+.pnpm-store/
+*.tsbuildinfo
+/data/admin-*.json
+/data/admin-audit.ndjson
+/data/feedback-images/
+/data/recycled-uploads.json
+/data/comments.json
+/data/download-counts.json

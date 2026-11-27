@@ -15,6 +15,7 @@ const items: Array<{ href: string; label: string; description: string; icon: Ico
   { href: "/admin/documents", label: "站点文书", description: "关于、侵权与版权", icon: "shield" },
   { href: "/admin/feedback", label: "反馈处理", description: "催更与失效", icon: "message" },
   { href: "/admin/uploads", label: "文件库", description: "图片与附件", icon: "hard-drive" },
+  { href: "/admin/history", label: "回收站与日志", description: "恢复内容与追踪操作", icon: "shield" },
   { href: "/admin/settings", label: "站点设置", description: "品牌与母站", icon: "cpu" },
 ];
 

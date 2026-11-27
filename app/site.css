@@ -1143,3 +1143,17 @@ h1, h2, h3, p { margin-top: 0; }
   .admin-panel-card, .admin-settings-form .admin-panel-card { padding: 16px; }
   .admin-login-card { padding: 28px 22px 24px; }
 }
+
+.update-counts { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px }
+.update-counts > div,.game-faq { padding:16px; border:1px solid #ddd; border-radius:8px }
+.update-counts span,.discussion-form label { display:block; margin-top:6px }
+.discussion-form { display:grid; gap:12px; width:100%; margin:16px 0 }
+.discussion-form input,.discussion-form textarea { display:block; width:100%; padding:10px; border:1px solid #aab0bc; border-radius:6px; font:inherit }
+.discussion-form button { justify-self:start }
+.feedback-box { flex-wrap:wrap }
+.comment-entry { border-top:1px solid #ddd; padding:14px 0; overflow-wrap:anywhere }
+.comment-entry small { margin-left:12px }
+.game-faq p { margin:6px 0 12px }
+.admin-toolbar { flex-wrap:wrap }
+
+.game-card__meta { flex-wrap:wrap }

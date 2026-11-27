@@ -61,6 +61,7 @@ function RelatedResourcePicker({ resources, selected, onChange }: {
 function GameEditor({ game, resources, isNew, onClose, onSaved }: {
   game: Game; resources: ResourceChoice[]; isNew: boolean; onClose: () => void; onSaved: (game: Game, originalSlug?: string) => void;
 }) {
+  const [owner,setOwner] = useState(game.slug);
   const [cover, setCover] = useState(game.cover || "");
   const [qrCodes, setQrCodes] = useState<Record<DownloadSource["id"], string>>(() => Object.fromEntries(downloadIds.map((id) => [id, game.downloads.find((source) => source.id === id)?.qrCode || ""])) as Record<DownloadSource["id"], string>);
   const [uploading, setUploading] = useState(false);
@@ -75,10 +76,12 @@ function GameEditor({ game, resources, isNew, onClose, onSaved }: {
 
   async function uploadCover(file?: File) {
     if (!file) return;
+    if (!owner) { setMessage("请先填写游戏标识"); return; }
     setUploading(true);
     setMessage("");
     const formData = new FormData();
     formData.set("file", file);
+    formData.set("owner", owner); formData.set("purpose", "cover");
     const response = await fetch("/api/admin/uploads", { method: "POST", body: formData });
     const payload = await response.json() as { data?: { url: string }; error?: string };
     if (response.ok && payload.data) setCover(payload.data.url);
@@ -88,10 +91,12 @@ function GameEditor({ game, resources, isNew, onClose, onSaved }: {
 
   async function uploadQrCode(id: DownloadSource["id"], file?: File) {
     if (!file) return;
+    if (!owner) { setMessage("请先填写游戏标识"); return; }
     setUploading(true);
     setMessage("");
     const formData = new FormData();
     formData.set("file", file);
+    formData.set("owner", owner); formData.set("purpose", id);
     const response = await fetch("/api/admin/uploads", { method: "POST", body: formData });
     const payload = await response.json() as { data?: { url: string }; error?: string };
     if (response.ok && payload.data) setQrCodes((current) => ({ ...current, [id]: payload.data!.url }));
@@ -109,7 +114,7 @@ function GameEditor({ game, resources, isNew, onClose, onSaved }: {
       return { id, name: String(data.get(`${id}Name`) || ""), url: game.downloads.find((source) => source.id === id)?.url || "", qrCode: qrCodes[id] || undefined, code: String(data.get(`${id}Code`) || "") || undefined, recommended: data.get(`${id}Recommended`) === "on" };
     }).filter((source): source is NonNullable<typeof source> => Boolean(source));
     const payload = {
-      slug: data.get("slug"), title: data.get("title"), englishTitle: data.get("englishTitle"), tagline: data.get("tagline"), platform: data.get("platform"), category: data.get("category"), genre: data.get("genre"), size: data.get("size"), updated: data.get("updated"), badge: data.get("badge"), score: Number(data.get("score")), featured: data.get("featured") === "on", cover, description: data.get("description"),
+      slug: data.get("slug"), title: data.get("title"), englishTitle: data.get("englishTitle"), tagline: data.get("tagline"), platform: data.get("platform"), category: data.get("category"), series: data.get("series"), genre: data.get("genre"), size: data.get("size"), updated: data.get("updated"), badge: data.get("badge"), score: Number(data.get("score")), featured: data.get("featured") === "on", cover, description: data.get("description"),
       requirements: { minimum: data.get("minimum"), recommended: data.get("recommended") }, downloads, resourceIds,
     };
     const response = await fetch(isNew ? "/api/admin/games" : `/api/admin/games/${encodeURIComponent(game.slug)}`, { method: isNew ? "POST" : "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -122,8 +127,8 @@ function GameEditor({ game, resources, isNew, onClose, onSaved }: {
     onSaved(result.data, isNew ? undefined : game.slug);
   }
 
-  return <div className="admin-editor-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="admin-editor" role="dialog" aria-modal="true" aria-labelledby="game-editor-title"><header><div><span>{isNew ? "CREATE GAME" : "EDIT GAME"}</span><h2 id="game-editor-title">{isNew ? "新增游戏" : `编辑：${game.title}`}</h2><p>游戏资料保存后会立即同步到前台页面。</p></div><button type="button" aria-label="关闭编辑器" onClick={onClose}><Icon name="x" /></button></header><form onSubmit={submit}>
-    <fieldset><legend>基本信息</legend><div className="admin-form-grid admin-form-grid--3"><label>中文名称<input name="title" defaultValue={game.title} required /></label><label>英文名称<input name="englishTitle" defaultValue={game.englishTitle} required /></label><label>地址标识<input name="slug" defaultValue={game.slug} placeholder="game-name" required /></label><label>游戏平台<select name="platform" value={platform} onChange={(event) => setPlatform(event.target.value as Platform)}>{platformMeta.map((item) => <option value={item.key} key={item.key}>{item.label}</option>)}</select></label><label>分类<input name="category" defaultValue={game.category} required /></label><label>具体类型<input name="genre" defaultValue={game.genre} required /></label><label>文件大小<input name="size" defaultValue={game.size} placeholder="例如 25 GB" required /></label><label>更新时间<input name="updated" type="date" defaultValue={game.updated} required /></label><label>状态标签<select name="badge" defaultValue={game.badge}><option>新游</option><option>更新</option><option>热门</option><option>精选</option></select></label><label>评分<input name="score" type="number" min="0" max="10" step="0.1" defaultValue={game.score} required /></label><label>真实阅读量（自动统计）<input type="number" value={game.views} readOnly title="由前台真实访问自动统计" /></label><label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={game.featured} /><span>设为首页精选</span></label></div><label>一句话介绍<textarea name="tagline" rows={2} defaultValue={game.tagline} required /></label><label>游戏介绍（每行一个段落）<textarea name="description" rows={5} defaultValue={game.description.join("\n")} required /></label></fieldset>
+  return <div className="admin-editor-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="admin-editor" role="dialog" aria-modal="true" aria-labelledby="game-editor-title"><header><div><span>{isNew ? "CREATE GAME" : "EDIT GAME"}</span><h2 id="game-editor-title">{isNew ? "新增游戏" : `编辑：${game.title}`}</h2><p>游戏资料保存后会立即同步到前台页面。</p></div><button type="button" aria-label="关闭编辑器" onClick={onClose}><Icon name="x" /></button></header><form onSubmit={submit}><label>游戏系列<input name="series" maxLength={80} defaultValue={game.series} /></label>
+    <fieldset><legend>基本信息</legend><div className="admin-form-grid admin-form-grid--3"><label>中文名称<input name="title" defaultValue={game.title} required /></label><label>英文名称<input name="englishTitle" defaultValue={game.englishTitle} required /></label><label>地址标识<input name="slug" onChange={event => setOwner(event.target.value.trim())} defaultValue={game.slug} placeholder="game-name" required /></label><label>游戏平台<select name="platform" value={platform} onChange={(event) => setPlatform(event.target.value as Platform)}>{platformMeta.map((item) => <option value={item.key} key={item.key}>{item.label}</option>)}</select></label><label>分类<input name="category" defaultValue={game.category} required /></label><label>具体类型<input name="genre" defaultValue={game.genre} required /></label><label>文件大小<input name="size" defaultValue={game.size} placeholder="例如 25 GB" required /></label><label>更新时间<input name="updated" type="date" defaultValue={game.updated} required /></label><label>状态标签<select name="badge" defaultValue={game.badge}><option>新游</option><option>更新</option><option>热门</option><option>精选</option></select></label><label>评分<input name="score" type="number" min="0" max="10" step="0.1" defaultValue={game.score} required /></label><label>真实阅读量（自动统计）<input type="number" value={game.views} readOnly title="由前台真实访问自动统计" /></label><label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={game.featured} /><span>设为首页精选</span></label></div><label>一句话介绍<textarea name="tagline" rows={2} defaultValue={game.tagline} required /></label><label>游戏介绍（每行一个段落）<textarea name="description" rows={5} defaultValue={game.description.join("\n")} required /></label></fieldset>
     <fieldset><legend>封面图片</legend><div className="admin-cover-upload">{cover ? <Image src={mediaUrl(cover)} alt="当前游戏封面" width={320} height={150} /> : <div><Icon name="gamepad" size={28} />尚未上传封面</div>}<div><label className="admin-file-button"><Icon name="download" size={17} />{uploading ? "正在上传…" : "选择并上传封面"}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={uploading} onChange={(event) => uploadCover(event.target.files?.[0])} /></label><input aria-label="封面对象存储地址" value={cover} readOnly placeholder="上传后自动填写" /><small>支持 JPG、PNG、WebP、GIF；图片将直接上传至对象存储。</small></div></div></fieldset>
     {platform === "pc" && <fieldset><legend>系统配置</legend><div className="admin-form-grid"><label>最低配置（每行一项）<textarea name="minimum" rows={6} defaultValue={game.requirements?.minimum.join("\n")} /></label><label>推荐配置（每行一项）<textarea name="recommended" rows={6} defaultValue={game.requirements?.recommended.join("\n")} /></label></div></fieldset>}
     <RelatedResourcePicker resources={resources} selected={resourceIds} onChange={toggleResource} />

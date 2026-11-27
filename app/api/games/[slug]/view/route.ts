@@ -1,13 +1,12 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { recordGameView } from "@/lib/content-store";
-import { objectStorageSourceConfig } from "@/lib/object-storage-config";
 import { checkRateLimit, clientAddress, isSameOriginRequest, rateLimitResponse } from "@/lib/request-security";
 
 const viewerCookieName = "zbc_viewer";
 
 function viewerSignature(value: string) {
-  return createHmac("sha256", objectStorageSourceConfig.secretAccessKey).update(value).digest("base64url");
+  return createHmac("sha256", process.env.ADMIN_SESSION_SECRET!).update(value).digest("base64url");
 }
 
 function validViewerId(value?: string) {
@@ -21,6 +20,7 @@ function validViewerId(value?: string) {
 
 export async function POST(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "请求来源无效" }, { status: 403 });
+  if (!process.env.ADMIN_SESSION_SECRET) return new Response(null, { status:503 });
   const rateLimit = checkRateLimit("game-view", clientAddress(request), 120, 60 * 60 * 1000);
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
 
